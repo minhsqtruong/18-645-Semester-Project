@@ -1,4 +1,4 @@
-COMPILER=gcc
+COMPILER=nvcc
 #LDFLAGS= neccessary LD libraries
 
 # Must return match.o

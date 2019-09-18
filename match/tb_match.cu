@@ -1,11 +1,9 @@
-#include "orb.h"
+#include"match.cuh"
 int main(int argc, char const *argv[]) {
 
-  // write test code for ORB pipeline here
+  // write test code for match module here
 
   // test pipeline integration
-  pipeline_print_oFAST();
-  pipeline_print_rBRIEF();
   pipeline_print_match();
   return 0;
 }

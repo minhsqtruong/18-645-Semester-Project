@@ -4,7 +4,7 @@
 
 SUBDIR = match oFAST rBRIEF
 EXEC = match/match.o oFAST/oFAST.o rBRIEF/rBRIEF.o
-COMPILER=gcc
+COMPILER=nvcc
 #LDFLAGS= neccessary LD libraries
 all:
 	for i in ${SUBDIR}; do \

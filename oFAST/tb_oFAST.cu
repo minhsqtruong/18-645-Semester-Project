@@ -1,9 +1,9 @@
-#include"rBRIEF.h"
+#include"oFAST.cuh"
 int main(int argc, char const *argv[]) {
 
-  // write test code for rBRIEF module here
+  // write test code for oFAST module here
 
   // test pipeline integration
-  pipeline_print_rBRIEF();
+  pipeline_print_oFAST();
   return 0;
 }

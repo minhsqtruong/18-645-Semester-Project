@@ -37,7 +37,8 @@ applications.
 * `./oFAST` stores the oriented FAST module programs testbenches.
 * `./rBRIEF` stores the rotated BRIEF module programs testbenches.
 * `orb.h` links all modules together.
-* `tb_orb` test the pipeline.
+* `orb.c` implements neccessary pipeline peripherals.
+* `tb_orb.c` test the pipeline.
 
 Each Module directory have 4 starting files: `Makefile` `*.c` `*.h` `tb_*`.
 These files are the minimum components needed to construct the pipeline.
