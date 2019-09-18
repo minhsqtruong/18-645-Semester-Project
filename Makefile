@@ -10,8 +10,8 @@ all:
 	for i in ${SUBDIR}; do \
 		(echo $$i; cd $$i; make all;); \
 	done
-	${COMPILER} -O -fPIC -c orb.c -o orb.o
-	${COMPILER} -O -o tb_orb tb_orb.c orb.o ${EXEC}
+	${COMPILER} -O --compiler-options '-fPIC' -c orb.cu -o orb.o
+	${COMPILER} -O -o tb_orb tb_orb.cu orb.o ${EXEC}
 
 lib: all
 	${COMPILER} orb -shared -o ./lib/liborb.so
