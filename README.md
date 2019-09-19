@@ -11,7 +11,12 @@
 |   Sep 20th   |   Layout Pipeline Modules   |   1    |        |
 |   Sep 22nd   |   Develop Peripherals (makefiles, directories, ...)  |   1    |        |
 |   Sep 23rd   |   Stage 1 Deadline | | |
-|   Dec 2nd   |   Final Deadline   |       |        |
+|   Oct 5th    | Naive Implementation of Module | 2 |||
+|   Oct 19th   | Parallelize Module | 2 |||
+|   Nov 3rd    | Testing module | 3 |||
+|   Nov 10th   | Benchmarking | 3 |||
+|   Nov 17th  |  Assemble Pipeline | 4 |||
+|   Dec 2nd   |   Final Deadline   |   5 6    |        |
 
 * Stage 1: Top-level Development. Make sure that the entire pipeline of ORB is
 compiled-able and modularized.
