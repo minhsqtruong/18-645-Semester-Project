@@ -1,7 +1,7 @@
 # 18-645-Semester-Project
 
 ### Team Members
-* Micheal Chang
+* Michael Chang
 * Frank Lee
 * Minh Truong
 
