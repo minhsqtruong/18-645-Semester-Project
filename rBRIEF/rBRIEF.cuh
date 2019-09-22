@@ -1,14 +1,43 @@
+#include<iostream>
 #ifndef RBRIEF_H
 #define RBRIEF_H
+// thanks to https://stackoverflow.com/questions/14038589/what-is-the-canonical-way-to-check-for-errors-using-the-cuda-runtime-api
+#define cudaErrorCheck(ans) { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
+{
+   if (code != cudaSuccess)
+   {
+      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+      if (abort) exit(code);
+   }
+}
 
-// write declaration of rBRIEF functions here
-void cpu_oBRIEF(float sin_theta,
+// Compare gpu with cpu binary feature for validation
+void validate_gpu_result(bool * cpu_binary_feature,
+                         bool * gpu_binary_feature);
+
+// Perform oBRIEF on 1 patch of image on gpu
+void gpu_oBRIEF(float sin_theta,
                 float cos_theta,
-                float* patch,
+                int kp_x,
+                int kp_y,
+                float * image,
+                int image_dim,
                 int patch_dim,
                 int * pattern,
                 bool * binary_feature
-              );
+                );
+// Perform oBRIEF on 1 patch of image on cpu
+void cpu_oBRIEF(float sin_theta,
+                float cos_theta,
+                int kp_x,
+                int kp_y,
+                float * image,
+                int image_dim,
+                int patch_dim,
+                int * pattern,
+                bool * binary_feature
+                );
 
 // thanks to OpenCV for training BRIEF pattern
 static int cpu_precompute_BRIEF_pattern[256*4] =
