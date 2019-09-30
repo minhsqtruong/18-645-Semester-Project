@@ -7,7 +7,7 @@ all: rBRIEF.cu
 
 # test contain the main function for rBRIEF module
 test: all tb_rBRIEF.cu
-	${COMPILER} -O -o tb_rBRIEF tb_rBRIEF.cu rBRIEF.o
+	${COMPILER} -o tb_rBRIEF tb_rBRIEF.cu rBRIEF.o
 
 clean:
 	rm -rf tmp* tb_rBRIEF *.o

@@ -1,5 +1,6 @@
 #include"rBRIEF.cuh"
 #include<stdio.h>
+#include<cstring>
 int main(int argc, char const *argv[]) {
 
   // Initialization
@@ -17,10 +18,11 @@ int main(int argc, char const *argv[]) {
   int patch_dim = 10;
   int * pattern;
   cudaErrorCheck(cudaMallocManaged(&pattern, 256 * 4 * sizeof(int)));
-  cudaErrorCheck(cudaMemcpy(&pattern,
-                           &cpu_precompute_BRIEF_pattern,
-                           256 * 4 * sizeof(int),
-                           cudaMemcpyDefault));
+  //std::memcpy(&pattern, &cpu_precompute_BRIEF_pattern,256 * 4 * sizeof(int));
+  // using memcpy result in Segfault
+  for (int i = 0; i < 256 * 4; i++)
+    pattern[i] = cpu_precompute_BRIEF_pattern[i];
+
 
   bool cpu_binary_feature[256];
   bool * gpu_binary_feature;
