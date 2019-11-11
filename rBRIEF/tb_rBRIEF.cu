@@ -1,59 +1,47 @@
+#include<stdlib.h>
+#include<iostream>
+#include<chrono>
 #include"rBRIEF.cuh"
-#include<stdio.h>
-#include<cstring>
+
+/*=============*/
+#define PRINTSTATS
+/*=============*/
+
 int main(int argc, char const *argv[]) {
 
-  // Initialization
-  float sin_theta = 0.9;
-  float cos_theta = 0.3;
-  float * image;
-  cudaErrorCheck(cudaMallocManaged(&image, 1000 * sizeof(float)));
-  for (int i = 0; i < 1000; i++) {
-    image[i] = (float) i;
+  // 1) Initialized arguments
+  int numPatch = 10;
+  int patchDim = 10;
+  float* patchArray = (float*) malloc(sizeof(float) * numPatch * patchDim * patchDim);
+  bool* binVectorArray = (bool*) malloc(sizeof(bool) * numPatch * 256);
+  for (int i = 0; i < numPatch * patchDim * patchDim; i++) {
+    patchArray[i] = static_cast <float> (rand()) / static_cast <float> (255.0);
   }
+  extern int cpu_precompute_BRIEF_pattern[256*4];
+  int* pattern = cpu_precompute_BRIEF_pattern;
 
-  int kp_x = 50;
-  int kp_y = 20;
-  int image_dim = 100;
-  int patch_dim = 10;
-  int * pattern;
-  cudaErrorCheck(cudaMallocManaged(&pattern, 256 * 4 * sizeof(int)));
-  //std::memcpy(&pattern, &cpu_precompute_BRIEF_pattern,256 * 4 * sizeof(int));
-  // using memcpy result in Segfault
-  for (int i = 0; i < 256 * 4; i++)
-    pattern[i] = cpu_precompute_BRIEF_pattern[i];
+  // 2) Run cpu reference
+  auto t1 = std::chrono::high_resolution_clock::now();
+  cpu_oBRIEF(numPatch, patchDim, patchArray, binVectorArray, pattern);
+  auto t2 = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
 
+  #ifdef PRINTSTATS
+  std::cout << "CPU reference: " << std::endl;
+  printMatrix<bool*>(binVectorArray, numPatch, 256);
+  std::cout << "CPU implementation takes: " << duration << " microseconds" <<std::endl;
+  #endif
 
-  bool cpu_binary_feature[256];
-  bool * gpu_binary_feature;
-  cudaErrorCheck(cudaMallocManaged(&gpu_binary_feature, 256 * sizeof(bool)));
-
-  // Test Start
-  cpu_oBRIEF( sin_theta,
-              cos_theta,
-              kp_x,
-              kp_y,
-              image,
-              image_dim,
-              patch_dim,
-              pattern,
-              cpu_binary_feature
-            );
-
-  gpu_oBRIEF( sin_theta,
-              cos_theta,
-              kp_x,
-              kp_y,
-              image,
-              image_dim,
-              patch_dim,
-              pattern,
-              gpu_binary_feature
-            );
-
-  validate_gpu_result(cpu_binary_feature, gpu_binary_feature);
-
-  // test pipeline integration
-  //pipeline_print_rBRIEF();
-  return 0;
+  // 3) Run gpu kernel
+  #ifdef PRINTSTATS
+  struct cudaDeviceProp prop;
+  cudaGetDeviceProperties(&prop, 0);
+  std::cout << std::endl;
+  std::cout << "GPU Name: " << prop.name << std::endl;
+  std::cout << "Global Memory: " << prop.totalGlobalMem << " bytes" << std::endl;
+  std::cout << "Shared Memory per SM: " << prop.sharedMemPerBlock << " bytes" << std::endl;
+  std::cout << "Registers per SM: " << prop.regsPerBlock << std::endl;
+  std::cout << "Warp Size:  " << prop.warpSize << std::endl;
+  std::cout << "Number of SM: " << prop.multiProcessorCount << std::endl;
+  #endif
 }

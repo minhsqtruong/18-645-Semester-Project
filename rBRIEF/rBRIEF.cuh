@@ -1,43 +1,29 @@
 #include<iostream>
+#include<math.h>
 #ifndef RBRIEF_H
 #define RBRIEF_H
-// thanks to https://stackoverflow.com/questions/14038589/what-is-the-canonical-way-to-check-for-errors-using-the-cuda-runtime-api
-#define cudaErrorCheck(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=true)
-{
-   if (code != cudaSuccess)
-   {
-      fprintf(stderr,"GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-      if (abort) exit(code);
-   }
+
+/*============================================================================*/
+/*
+printMatrix prints out 2D matrix of any type.
+    @array: 1D array of matrix value
+    @row: number of rows in the print out
+    @col: number of columns in the print out
+*/
+template <typename T>
+void printMatrix (T array, int row, int col) {
+  for (int i = 0; i < row; i++) {
+    for (int j = 0; j < col; j++) {
+      if (j > 10) {
+        std::cout << "...";
+        break;
+      }
+      std::cout << array[i*col + j] << " ";
+    }
+    std::cout << std::endl;
+  }
 }
-
-// Compare gpu with cpu binary feature for validation
-void validate_gpu_result(bool * cpu_binary_feature,
-                         bool * gpu_binary_feature);
-
-// Perform oBRIEF on 1 patch of image on gpu
-void gpu_oBRIEF(float sin_theta,
-                float cos_theta,
-                int kp_x,
-                int kp_y,
-                float * image,
-                int image_dim,
-                int patch_dim,
-                int * pattern,
-                bool * binary_feature
-                );
-// Perform oBRIEF on 1 patch of image on cpu
-void cpu_oBRIEF(float sin_theta,
-                float cos_theta,
-                int kp_x,
-                int kp_y,
-                float * image,
-                int image_dim,
-                int patch_dim,
-                int * pattern,
-                bool * binary_feature
-                );
+/*============================================================================*/
 
 // thanks to OpenCV for training BRIEF pattern
 static int cpu_precompute_BRIEF_pattern[256*4] =
@@ -300,6 +286,14 @@ static int cpu_precompute_BRIEF_pattern[256*4] =
     -1,-6, 0,-11/*mean (0.127148), correlation (0.547401)*/
 };
 
-// test pipeline integration
+// cpu functions
+void cpu_oBRIEF(int, int, float*, bool*, int*);
+
+// gpu functions
+// __device__ void gpu_oBRIEF_Kernel();
+// __global__ void gpu_oBRIEF_Loop();
+// void gpu_oBRIEF();
+
+// test functions
 void pipeline_print_rBRIEF();
 #endif

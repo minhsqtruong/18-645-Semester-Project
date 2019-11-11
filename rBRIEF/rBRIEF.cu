@@ -1,165 +1,98 @@
-#include "stdio.h"
-/*==============================================================================
+#include "rBRIEF.cuh"
+/*
+Specification:
+    The Kernel for oBRIEF is designed for the Quadro P2000 GPU with:
 
-==============================================================================*/
-void validate_gpu_result(bool * cpu_binary_feature,
-                         bool * gpu_binary_feature)
+    CPU-GPU interface:
+      Global Memory Bandwidth: 140 GB/s
+      GPU clock: 1.37 GHz
+      Global Memory Size: 5.12 GB
+      Memory Bus: 160 bits / 20 bytes
+
+    Size:
+      SM Count: 8
+      CUDA cores: 1024 (4 warps per SM)
+      Threads per Warp: 32
+      Registers: per SM
+      Shared Memory: per SM
+      L1 Cache: 48 KB per SM
+      L2 Cache: 1280 KB
+
+    Memory Hierachy:
+      1) Register File
+      2) Shared Memory - L1 cache
+      3) L2 cache
+      4) Global Memory
+*/
+
+/*============================================================================*/
+/*
+cpu_oBRIEF calculate binary descriptor for the patches.
+    @numPatch: number of patches that needs binary vector calculation
+    @patchDim: the side dimension of each patch
+    @patchArray:  a 1D array that holds the patches in consecutive order.
+    @binVectorArray: a 1D boolean vector that holds all binary descriptors
+    @pattern: the precomputed pattern use for binary sampling.
+*/
+void cpu_oBRIEF(int numPatch, int patchDim, float* patchArray, bool* binVectorArray, int* pattern)
 {
-  for (int i = 0; i < 256; i++){
-    if (cpu_binary_feature[i] != gpu_binary_feature[i])
-      printf("Error cpu[%d] = %d while gpu[%d] = %d\n", i, cpu_binary_feature[i]
-                                                      , i, gpu_binary_feature[i]);
-  }
-};
-/*==============================================================================
+  for (int patchIdx = 0; patchIdx < numPatch; patchIdx+=1) {
 
-==============================================================================*/
-void __global__
-gpu_oBRIEF_kernel(float sin_theta,
-                  float cos_theta,
-                  int kp_x, //TODO change to array
-                  int kp_y, //TODO change to array
-                  float * image,
-                  int image_dim,
-                  int image_size, // = image_dim ^ 2
-                  int patch_dim,
-                  int patch_size, // = patch_dim ^ 2
-                  int * pattern,
-                  bool * binary_feature)
-{
-  //INITIATIONS AND ALLOCATIONS
-  extern __shared__ float shared_mem[];
-  float* shared_image = &shared_mem[0];
-  float* shared_patch = &shared_mem[image_size];
-  int local_id = threadIdx.x;
-  int stride = blockDim.x;
-  int kp;
-  int center_column;
-  int ax, ay, bx, by;
-  int rotated_ax, rotated_ay, rotated_bx, rotated_by;
-  int Ia, Ib;
-  int i = local_id / patch_dim;
-  int j = local_id % patch_dim;
+    // 1) Get the patch and its binary vector
+    float * patch = &patchArray[patchIdx*(patchDim*patchDim)];
+    int patchCenter = patchDim / 2;
+    bool * binVector = &binVectorArray[patchIdx*256];
 
-  // LOAD IMAGE INTO SHARED MEMORY TODO look into unrolling this loop
-  for (int i = local_id; i < image_size; i += stride) {
-    shared_image[i] = image[i];
-  }
-  __syncthreads();
+    // 2) Calculate the angle for the patch
+    float m01 = 0.f;
+    float m10 = 0.f;
+    float theta;
+    for (int pixIdx = 0; pixIdx < patchDim*patchDim; pixIdx++) {
+      int x = pixIdx % patchDim*patchDim;
+      int y = pixIdx / patchDim*patchDim;
+      m01 += (y - patchCenter) * patch[pixIdx]; // offset so that center is origin
+      m10 += (x - patchCenter) * patch[pixIdx]; // offset so that center is origin
+    }
+    theta = atan2f(m01, m10);
 
-  // ALLOCATE PATCH OF THE SPECIFIED KEYPOINT
-  // TODO change this to loop
-  // TODO look into prefetching the next patch
-  kp = kp_x + kp_y * image_dim;
-  if (local_id < patch_size) {
-        center_column = kp + (i - patch_dim / 2) * image_dim;
-        shared_patch[j + i * patch_dim]
-        = shared_image[center_column + (j - patch_dim)];
-  }
-  __syncthreads();
+    // 3) Calculate sin, cos of the angle
+    float sinTheta, cosTheta;
+    sincosf(theta, &sinTheta, &cosTheta);
 
-  // SAMPLE THE PATCH BASED ON PATTERN AND RETURN THE BINARY FEATURE
-  ax = pattern[4*local_id];
-  ay = pattern[4*local_id+1];
-  bx = pattern[4*local_id+2];
-  by = pattern[4*local_id+3];
+    // 4) Sample the patch and return its binary feature
+    float Ia, Ib;
+    int ax, ay, bx, by;
+    int rotated_ax, rotated_ay, rotated_bx, rotated_by;
+    for (int i = 0; i < 256; ++i) {
+      ax = pattern[4*i];
+      ay = pattern[4*i+1];
+      bx = pattern[4*i+2];
+      by = pattern[4*i+3];
 
-  rotated_ax = (int) (cos_theta * ax - sin_theta * ay);
-  rotated_ay = (int) (sin_theta * ay + cos_theta * ay);
-  rotated_bx = (int) (cos_theta * bx - sin_theta * by);
-  rotated_by = (int) (sin_theta * by + cos_theta * by);
+      rotated_ax = (int) (cosTheta * ax - sinTheta * ay);
+      rotated_ay = (int) (sinTheta * ay + cosTheta * ay);
+      rotated_bx = (int) (cosTheta * bx - sinTheta * by);
+      rotated_by = (int) (sinTheta * by + cosTheta * by);
 
-  Ia = shared_patch[rotated_ax + patch_dim * rotated_ay];
-  Ib = shared_patch[rotated_bx + patch_dim * rotated_by];
+      Ia = patch[rotated_ax + patchDim * rotated_ay];
+      Ib = patch[rotated_bx + patchDim * rotated_by];
 
-  binary_feature[local_id] = Ia > Ib;
-
-};
-
-void gpu_oBRIEF(float sin_theta,
-                float cos_theta,
-                int kp_x,
-                int kp_y,
-                float * image,
-                int image_dim,
-                int patch_dim,
-                int * pattern,
-                bool * binary_feature
-                )
-{
-  int num_thread = 256;
-  int num_kp_per_block = 10;
-  int num_block  = 1; // TODO replace by actual computation later.
-  int image_size = image_dim * image_dim;
-  int patch_size = patch_dim * patch_dim;
-  int shared_mem_size = sizeof(float) * (image_size + patch_size);
-  gpu_oBRIEF_kernel<<<num_block, num_thread, shared_mem_size>>>
-  (sin_theta,
-   cos_theta,
-   kp_x, //TODO change to array
-   kp_y, //TODO change to array
-   image,
-   image_dim,
-   image_size, // = image_dim ^ 2
-   patch_dim,
-   patch_size, // = patch_dim ^ 2
-   pattern,
-   binary_feature);
-  cudaDeviceSynchronize();
-};
-/*==============================================================================
-
-==============================================================================*/
-void cpu_oBRIEF(float sin_theta,
-                float cos_theta,
-                int kp_x,
-                int kp_y,
-                float * image,
-                int image_dim,
-                int patch_dim,
-                int * pattern,
-                bool * binary_feature
-                )
-{
-
-  // INITIATIONS AND ALLOCATIONS
-  int ax, ay, bx, by;
-  int rotated_ax, rotated_ay, rotated_bx, rotated_by;
-  int Ia, Ib;
-  int center_column;
-  int kp = kp_x + kp_y * image_dim; // find the keypoint index in 1D format
-  float * patch = new float[patch_dim * patch_dim]; // allocate space for patch
-
-
-  // ALLOCATE PATCH OF THE SPECIFIED KEYPOINT
-  // find center point of every collumn
-  for (int i = 0; i < patch_dim; i++) {
-    center_column = kp + (i - patch_dim / 2) * image_dim;
-    // iterate through each column
-    for (int j = 0; j < patch_dim; j++) {
-      patch[j + i * patch_dim] = image[center_column + (j - patch_dim)];
+      binVector[i] = Ia > Ib;
     }
   }
-
-  // SAMPLE THE PATCH BASED ON PATTERN AND RETURN THE BINARY FEATURE
-  for (int i = 0; i < 256; ++i) {
-    ax = pattern[4*i];
-    ay = pattern[4*i+1];
-    bx = pattern[4*i+2];
-    by = pattern[4*i+3];
-
-    rotated_ax = (int) (cos_theta * ax - sin_theta * ay);
-    rotated_ay = (int) (sin_theta * ay + cos_theta * ay);
-    rotated_bx = (int) (cos_theta * bx - sin_theta * by);
-    rotated_by = (int) (sin_theta * by + cos_theta * by);
-
-    Ia = patch[rotated_ax + patch_dim * rotated_ay];
-    Ib = patch[rotated_bx + patch_dim * rotated_by];
-
-    binary_feature[i] = Ia > Ib;
-  }
 };
-/*==============================================================================
 
-==============================================================================*/
+/*============================================================================*/
+/*
+gpu_oBRIEF_Kernel
+*/
+// __device__ void gpu_oBRIEF_Kernel()
+// {
+//
+// };
+
+/*============================================================================*/
+/*
+pipeline_print_rBRIEF is just a testing function
+*/
 void pipeline_print_rBRIEF(){ printf("rBRIEF Module active!\n");};
