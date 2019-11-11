@@ -12,9 +12,9 @@ Specification:
     Size:
       SM Count: 8
       CUDA cores: 1024 (4 warps per SM)
-      Threads per Warp: 32
-      Registers: per SM
-      Shared Memory: per SM
+      Threads: 32 per Warp
+      Registers: 65536 per SM
+      Shared Memory: 49152 per SM
       L1 Cache: 48 KB per SM
       L2 Cache: 1280 KB
 
