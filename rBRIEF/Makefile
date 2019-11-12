@@ -3,7 +3,7 @@ COMPILER=nvcc
 
 # Must return rBRIEF.o
 all: rBRIEF.cu
-	${COMPILER} -O -c rBRIEF.cu -o rBRIEF.o
+	${COMPILER} -ftz=true -O -c rBRIEF.cu -o rBRIEF.o
 
 # test contain the main function for rBRIEF module
 test: all tb_rBRIEF.cu

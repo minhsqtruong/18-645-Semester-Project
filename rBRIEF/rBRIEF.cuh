@@ -291,8 +291,8 @@ void cpu_oBRIEF(int, int, float*, bool*, int*);
 
 // gpu functions
 // __device__ void gpu_oBRIEF_Kernel();
-// __global__ void gpu_oBRIEF_Loop();
-// void gpu_oBRIEF();
+__global__ void gpu_oBRIEF_Loop(int, float4* , int4*);
+void gpu_oBRIEF(float4*, int4*);
 
 // test functions
 void pipeline_print_rBRIEF();
