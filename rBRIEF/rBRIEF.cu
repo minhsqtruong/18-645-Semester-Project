@@ -34,7 +34,7 @@ cpu_oBRIEF calculate binary descriptor for the patches.
     @binVectorArray: a 1D boolean vector that holds all binary descriptors
     @pattern: the precomputed pattern use for binary sampling.
 */
-void cpu_oBRIEF(int numPatch, int patchDim, float* patchArray, bool* binVectorArray, int* pattern)
+void cpu_rBRIEF(int numPatch, int patchDim, float* patchArray, bool* binVectorArray, int* pattern)
 {
   for (int patchIdx = 0; patchIdx < numPatch; patchIdx+=1) {
 
@@ -98,7 +98,7 @@ gpu_oBRIEF_Loop iteratively execute the kernel until done
     @patches: global memory patches stored in float4 format
     @pattern: global memory patterns stored in float4 format
 */
- __global__ void gpu_oBRIEF_Loop(int N, float4* patches, int4* pattern)
+ __global__ void gpu_rBRIEF_Loop(int N, float4* patches, int4* pattern)
  {
    // 1) Shared memory management
    extern __shared__ float4 shared[];
@@ -125,7 +125,7 @@ gpu_oBRIEF_Loop iteratively execute the kernel until done
    thisPatches = sharedPatches0;
 
    // Kernel Loop begin:
-   for (int i = blockIdx.x; i < (P - 1) * N * blockDim.x*24; i+= )
+   //for (int i = blockIdx.x; i < (P - 1) * N * blockDim.x*24; i+= )
 
  };
 
@@ -136,13 +136,13 @@ gpu_oBRIEF_Loop iteratively execute the kernel until done
      @patches: global memory patches stored in float4 format
      @pattern: global memory patterns stored in float4 format
  */
- void gpu_oBRIEF(float4* patches, int4* pattern)
+ void gpu_rBRIEF(float4* patches, int4* pattern)
  {
    int N = 1;
    int numBlocks =  10;
    int numThreads = 128;
    int shared_size = sizeof(float4) * (256 + N*numThreads*2);
-   gpu_oBRIEF_Loop<<<numBlocks, numThreads,shared_size>>>(N, patches, pattern);
+   gpu_rBRIEF_Loop<<<numBlocks, numThreads,shared_size>>>(N, patches, pattern);
  };
 
 /*============================================================================*/
