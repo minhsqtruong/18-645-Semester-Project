@@ -129,20 +129,408 @@ gpu_oBRIEF_Loop iteratively execute the kernel until done
 
  };
 
+ /*============================================================================*/
+ /*
+ calculate_moments calculate the moments of a patch
+ */
+ __forceinline __device__ void calculate_moments(float4* patches,
+                                                 float* _m01,
+                                                 float* _m10,
+                                                 int P,
+                                                 int global_id,
+                                                 float4 intensity0,
+                                                 float4 intensity1,
+                                                 float4 intensity2,
+                                                 float4 intensity3,
+                                                 float4 intensity4,
+                                                 float4 intensity5,
+                                                 float4 intensity6,
+                                                 float4 intensity7,
+                                                 float4 intensity8,
+                                                 float4 intensity9,
+                                                 float4 intensity10,
+                                                 float4 intensity11,
+                                                 float4 intensity12,
+                                                 float4 intensity13,
+                                                 float4 intensity14,
+                                                 float4 intensity15,
+                                                 float4 intensity16,
+                                                 float4 intensity17,
+                                                 float4 intensity18,
+                                                 float4 intensity19,
+                                                 float4 intensity20,
+                                                 float4 intensity21,
+                                                 float4 intensity22,
+                                                 float4 intensity23,
+                                                 )
+ {
+   float m01 = 0.0;
+   float m10 = 0.0;
+   float4 intensity;
 
+   intensity = intensity0 ;
+   m01 = __fmaf_rd(-5.0, intensity.x,m01);
+   m10 = __fmaf_rd(-5.0, intensity.x,m10);
+   m01 = __fmaf_rd(-4.0, intensity.y,m01);
+   m10 = __fmaf_rd(-5.0, intensity.y,m10);
+   m01 = __fmaf_rd(-3.0, intensity.z,m01);
+   m10 = __fmaf_rd(-5.0, intensity.z,m10);
+   m01 = __fmaf_rd(-2.0, intensity.w,m01);
+   m10 = __fmaf_rd(-5.0, intensity.w,m10);
+   intensity = intensity1 ;
+   m01 = __fmaf_rd(-1.0, intensity.x,m01);
+   m10 = __fmaf_rd(-5.0, intensity.x,m10);
+   //m01 = __fmaf_rd(-0.0, intensity.y,m01);
+   m10 = __fmaf_rd(-5.0, intensity.y,m10);
+   m01 = __fmaf_rd( 1.0, intensity.z,m01);
+   m10 = __fmaf_rd(-5.0, intensity.z,m10);
+   m01 = __fmaf_rd( 2.0, intensity.w,m01);
+   m10 = __fmaf_rd(-5.0, intensity.w,m10);
+   intensity = intensity2 ;
+   m01 = __fmaf_rd( 3.0, intensity.x,m01);
+   m10 = __fmaf_rd(-5.0, intensity.x,m10);
+   m01 = __fmaf_rd( 4.0, intensity.y,m01);
+   m10 = __fmaf_rd(-5.0, intensity.y,m10);
+
+   m01 = __fmaf_rd(-5.0, intensity.z,m01);
+   m10 = __fmaf_rd(-4.0, intensity.z,m10);
+   m01 = __fmaf_rd(-4.0, intensity.w,m01);
+   m10 = __fmaf_rd(-4.0, intensity.w,m10);
+   intensity = intensity3 ;
+   m01 = __fmaf_rd(-3.0, intensity.x,m01);
+   m10 = __fmaf_rd(-4.0, intensity.x,m10);
+   m01 = __fmaf_rd(-2.0, intensity.y,m01);
+   m10 = __fmaf_rd(-4.0, intensity.y,m10);
+   m01 = __fmaf_rd(-1.0, intensity.z,m01);
+   m10 = __fmaf_rd(-4.0, intensity.z,m10);
+   //m01 = __fmaf_rd(-0.0, intensity.w,m01);
+   m10 = __fmaf_rd(-4.0, intensity.w,m10);
+   intensity = intensity4 ;
+   m01 = __fmaf_rd( 1.0, intensity.x,m01);
+   m10 = __fmaf_rd(-4.0, intensity.x,m10);
+   m01 = __fmaf_rd( 2.0, intensity.y,m01);
+   m10 = __fmaf_rd(-4.0, intensity.y,m10);
+   m01 = __fmaf_rd( 3.0, intensity.z,m01);
+   m10 = __fmaf_rd(-4.0, intensity.z,m10);
+   m01 = __fmaf_rd( 4.0, intensity.w,m01);
+   m10 = __fmaf_rd(-4.0, intensity.w,m10);
+
+   intensity = intensity5 ;
+   m01 = __fmaf_rd(-5.0, intensity.x,m01);
+   m10 = __fmaf_rd(-3.0, intensity.x,m10);
+   m01 = __fmaf_rd(-4.0, intensity.y,m01);
+   m10 = __fmaf_rd(-3.0, intensity.y,m10);
+   m01 = __fmaf_rd(-3.0, intensity.z,m01);
+   m10 = __fmaf_rd(-3.0, intensity.z,m10);
+   m01 = __fmaf_rd(-2.0, intensity.w,m01);
+   m10 = __fmaf_rd(-3.0, intensity.w,m10);
+   intensity = intensity6 ;
+   m01 = __fmaf_rd(-1.0, intensity.x,m01);
+   m10 = __fmaf_rd(-3.0, intensity.x,m10);
+   //m01 = __fmaf_rd(-0.0, intensity.y,m01);
+   m10 = __fmaf_rd(-3.0, intensity.y,m10);
+   m01 = __fmaf_rd( 1.0, intensity.z,m01);
+   m10 = __fmaf_rd(-3.0, intensity.z,m10);
+   m01 = __fmaf_rd( 2.0, intensity.w,m01);
+   m10 = __fmaf_rd(-3.0, intensity.w,m10);
+   intensity = intensity7 ;
+   m01 = __fmaf_rd( 3.0, intensity.x,m01);
+   m10 = __fmaf_rd(-3.0, intensity.x,m10);
+   m01 = __fmaf_rd( 4.0, intensity.y,m01);
+   m10 = __fmaf_rd(-3.0, intensity.y,m10);
+
+   m01 = __fmaf_rd(-5.0, intensity.z,m01);
+   m10 = __fmaf_rd(-2.0, intensity.z,m10);
+   m01 = __fmaf_rd(-4.0, intensity.w,m01);
+   m10 = __fmaf_rd(-2.0, intensity.w,m10);
+   intensity = intensity8 ;
+   m01 = __fmaf_rd(-3.0, intensity.x,m01);
+   m10 = __fmaf_rd(-2.0, intensity.x,m10);
+   m01 = __fmaf_rd(-2.0, intensity.y,m01);
+   m10 = __fmaf_rd(-2.0, intensity.y,m10);
+   m01 = __fmaf_rd(-1.0, intensity.z,m01);
+   m10 = __fmaf_rd(-2.0, intensity.z,m10);
+   //m01 = __fmaf_rd(-0.0, intensity.w,m01);
+   m10 = __fmaf_rd(-2.0, intensity.w,m10);
+   intensity = intensity9 ;
+   m01 = __fmaf_rd( 1.0, intensity.x,m01);
+   m10 = __fmaf_rd(-2.0, intensity.x,m10);
+   m01 = __fmaf_rd( 2.0, intensity.y,m01);
+   m10 = __fmaf_rd(-2.0, intensity.y,m10);
+   m01 = __fmaf_rd( 3.0, intensity.z,m01);
+   m10 = __fmaf_rd(-2.0, intensity.z,m10);
+   m01 = __fmaf_rd( 4.0, intensity.w,m01);
+   m10 = __fmaf_rd(-2.0, intensity.w,m10);
+
+   intensity = intensity10 ;
+   m01 = __fmaf_rd(-5.0, intensity.x,m01);
+   m10 = __fmaf_rd(-1.0, intensity.x,m10);
+   m01 = __fmaf_rd(-4.0, intensity.y,m01);
+   m10 = __fmaf_rd(-1.0, intensity.y,m10);
+   m01 = __fmaf_rd(-3.0, intensity.z,m01);
+   m10 = __fmaf_rd(-1.0, intensity.z,m10);
+   m01 = __fmaf_rd(-2.0, intensity.w,m01);
+   m10 = __fmaf_rd(-1.0, intensity.w,m10);
+   intensity = intensity11 ;
+   m01 = __fmaf_rd(-1.0, intensity.x,m01);
+   m10 = __fmaf_rd(-1.0, intensity.x,m10);
+   //m01 = __fmaf_rd(-0.0, intensity.y,m01);
+   m10 = __fmaf_rd(-1.0, intensity.y,m10);
+   m01 = __fmaf_rd( 1.0, intensity.z,m01);
+   m10 = __fmaf_rd(-1.0, intensity.z,m10);
+   m01 = __fmaf_rd( 2.0, intensity.w,m01);
+   m10 = __fmaf_rd(-1.0, intensity.w,m10);
+   intensity = intensity12 ;
+   m01 = __fmaf_rd( 3.0, intensity.x,m01);
+   m10 = __fmaf_rd(-1.0, intensity.x,m10);
+   m01 = __fmaf_rd( 4.0, intensity.y,m01);
+   m10 = __fmaf_rd(-1.0, intensity.y,m10);
+
+   m01 = __fmaf_rd(-5.0, intensity.z,m01);
+   //m10 = __fmaf_rd( 0.0, intensity.z,m10);
+   m01 = __fmaf_rd(-4.0, intensity.w,m01);
+   //m10 = __fmaf_rd( 0.0, intensity.w,m10);
+   intensity = intensity13 ;
+   m01 = __fmaf_rd(-3.0, intensity.x,m01);
+   //m10 = __fmaf_rd( 0.0, intensity.x,m10);
+   m01 = __fmaf_rd(-2.0, intensity.y,m01);
+   //m10 = __fmaf_rd( 0.0, intensity.y,m10);
+   m01 = __fmaf_rd(-1.0, intensity.z,m01);
+   //m10 = __fmaf_rd( 0.0, intensity.z,m10);
+   //m01 = __fmaf_rd(-0.0, intensity.w,m01);
+   //m10 = __fmaf_rd( 0.0, intensity.w,m10);
+   intensity = intensity14 ;
+   m01 = __fmaf_rd( 1.0, intensity.x,m01);
+   //m10 = __fmaf_rd( 0.0, intensity.x,m10);
+   m01 = __fmaf_rd( 2.0, intensity.y,m01);
+   //m10 = __fmaf_rd( 0.0, intensity.y,m10);
+   m01 = __fmaf_rd( 3.0, intensity.z,m01);
+   //m10 = __fmaf_rd( 0.0, intensity.z,m10);
+   m01 = __fmaf_rd( 4.0, intensity.w,m01);
+   //m10 = __fmaf_rd( 0.0, intensity.w,m10);
+
+   intensity = intensity15 ;
+   m01 = __fmaf_rd(-5.0, intensity.x,m01);
+   m10 = __fmaf_rd( 1.0, intensity.x,m10);
+   m01 = __fmaf_rd(-4.0, intensity.y,m01);
+   m10 = __fmaf_rd( 1.0, intensity.y,m10);
+   m01 = __fmaf_rd(-3.0, intensity.z,m01);
+   m10 = __fmaf_rd( 1.0, intensity.z,m10);
+   m01 = __fmaf_rd(-2.0, intensity.w,m01);
+   m10 = __fmaf_rd( 1.0, intensity.w,m10);
+   intensity = intensity16 ;
+   m01 = __fmaf_rd(-1.0, intensity.x,m01);
+   m10 = __fmaf_rd( 1.0, intensity.x,m10);
+   //m01 = __fmaf_rd(-0.0, intensity.y,m01);
+   m10 = __fmaf_rd( 1.0, intensity.y,m10);
+   m01 = __fmaf_rd( 1.0, intensity.z,m01);
+   m10 = __fmaf_rd( 1.0, intensity.z,m10);
+   m01 = __fmaf_rd( 2.0, intensity.w,m01);
+   m10 = __fmaf_rd( 1.0, intensity.w,m10);
+   intensity = intensity17 ;
+   m01 = __fmaf_rd( 3.0, intensity.x,m01);
+   m10 = __fmaf_rd( 1.0, intensity.x,m10);
+   m01 = __fmaf_rd( 4.0, intensity.y,m01);
+   m10 = __fmaf_rd( 1.0, intensity.y,m10);
+
+   m01 = __fmaf_rd(-5.0, intensity.z,m01);
+   m10 = __fmaf_rd( 2.0, intensity.z,m10);
+   m01 = __fmaf_rd(-4.0, intensity.w,m01);
+   m10 = __fmaf_rd( 2.0, intensity.w,m10);
+   intensity = intensity18 ;
+   m01 = __fmaf_rd(-3.0, intensity.x,m01);
+   m10 = __fmaf_rd( 2.0, intensity.x,m10);
+   m01 = __fmaf_rd(-2.0, intensity.y,m01);
+   m10 = __fmaf_rd( 2.0, intensity.y,m10);
+   m01 = __fmaf_rd(-1.0, intensity.z,m01);
+   m10 = __fmaf_rd( 2.0, intensity.z,m10);
+   //m01 = __fmaf_rd(-0.0, intensity.w,m01);
+   m10 = __fmaf_rd( 2.0, intensity.w,m10);
+   intensity = intensity19 ;
+   m01 = __fmaf_rd( 1.0, intensity.x,m01);
+   m10 = __fmaf_rd( 2.0, intensity.x,m10);
+   m01 = __fmaf_rd( 2.0, intensity.y,m01);
+   m10 = __fmaf_rd( 2.0, intensity.y,m10);
+   m01 = __fmaf_rd( 3.0, intensity.z,m01);
+   m10 = __fmaf_rd( 2.0, intensity.z,m10);
+   m01 = __fmaf_rd( 4.0, intensity.w,m01);
+   m10 = __fmaf_rd( 2.0, intensity.w,m10);
+
+   intensity = intensity20 ;
+   m01 = __fmaf_rd(-5.0, intensity.x,m01);
+   m10 = __fmaf_rd(-3.0, intensity.x,m10);
+   m01 = __fmaf_rd(-4.0, intensity.y,m01);
+   m10 = __fmaf_rd(-3.0, intensity.y,m10);
+   m01 = __fmaf_rd(-3.0, intensity.z,m01);
+   m10 = __fmaf_rd(-3.0, intensity.z,m10);
+   m01 = __fmaf_rd(-2.0, intensity.w,m01);
+   m10 = __fmaf_rd(-3.0, intensity.w,m10);
+   intensity = intensity21 ;
+   m01 = __fmaf_rd(-1.0, intensity.x,m01);
+   m10 = __fmaf_rd(-3.0, intensity.x,m10);
+   //m01 = __fmaf_rd(-0.0, intensity.y,m01);
+   m10 = __fmaf_rd(-3.0, intensity.y,m10);
+   m01 = __fmaf_rd( 1.0, intensity.z,m01);
+   m10 = __fmaf_rd( 3.0, intensity.z,m10);
+   m01 = __fmaf_rd( 2.0, intensity.w,m01);
+   m10 = __fmaf_rd( 3.0, intensity.w,m10);
+   intensity = intensity22 ;
+   m01 = __fmaf_rd( 3.0, intensity.x,m01);
+   m10 = __fmaf_rd( 3.0, intensity.x,m10);
+   m01 = __fmaf_rd( 4.0, intensity.y,m01);
+   m10 = __fmaf_rd( 3.0, intensity.y,m10);
+
+   m01 = __fmaf_rd(-5.0, intensity.z,m01);
+   m10 = __fmaf_rd( 4.0, intensity.z,m10);
+   m01 = __fmaf_rd(-4.0, intensity.w,m01);
+   m10 = __fmaf_rd( 4.0, intensity.w,m10);
+   intensity = intensity23 ;
+   m01 = __fmaf_rd(-3.0, intensity.x,m01);
+   m10 = __fmaf_rd( 4.0, intensity.x,m10);
+   m01 = __fmaf_rd(-2.0, intensity.y,m01);
+   m10 = __fmaf_rd( 4.0, intensity.y,m10);
+   m01 = __fmaf_rd(-1.0, intensity.z,m01);
+   m10 = __fmaf_rd( 4.0, intensity.z,m10);
+   //m01 = __fmaf_rd(-0.0, intensity.w,m01);
+   m10 = __fmaf_rd( 4.0, intensity.w,m10);
+   m01 = __fmaf_rd( 1.0, intensity.x,m01);
+   m10 = __fmaf_rd( 4.0, intensity.x,m10);
+   m01 = __fmaf_rd( 2.0, intensity.y,m01);
+   m10 = __fmaf_rd( 4.0, intensity.y,m10);
+   m01 = __fmaf_rd( 3.0, intensity.z,m01);
+   m10 = __fmaf_rd( 4.0, intensity.z,m10);
+   m01 = __fmaf_rd( 4.0, intensity.w,m01);
+   m10 = __fmaf_rd( 4.0, intensity.w,m10);
+
+    *_m01 = m01;
+    *_m10 = m10;
+ }
+
+ /*============================================================================*/
+ /*
+ gpu_rBRIEF_naive naive implementation of kernel, serve as baseline upon which
+ better kernel are design
+ */
+ __global__ void gpu_rBRIEF_naive(float4* patches, int4* pattern, double4* train_bin_vec, int K, int P)
+ {
+   extern __shared__ float4 shared_mem[];
+   int4* shared_pattern = (int4*) shared_mem;
+   double4* shared_train_vec = (double4*) sharedPattern[256];
+
+   // 1) Setup thread ids and stride
+   int local_id = threadIdx.x;
+   int local_stride = blockDim.x;
+   int global_id = blockIdx.x * gridDim.x + local_id;
+   int global_stride = blockDim.x * gridDim.x;
+
+   // 2) Load Sampling Pattern into Shared Memory
+   for (int i = local_id; i < 256; i+=local_stride)
+      shared_pattern[i] = pattern[i];
+
+   // 3) Load Training binary vector into Shared Memory
+   for (int i = local_id; i < K; i+=local_stride)
+      shared_train_vec[i] = train_bin_vec[i];
+
+   // 4) 1 thread works on 1 patch at a time.
+   float m01;
+   float m10;
+   float theta;
+   float4 intensity0,
+   intensity1,
+   intensity2,
+   intensity3,
+   intensity4,
+   intensity5,
+   intensity6,
+   intensity7,
+   intensity8,
+   intensity9,
+   intensity10,
+   intensity11,
+   intensity12,
+   intensity13,
+   intensity14,
+   intensity15,
+   intensity16,
+   intensity17,
+   intensity18,
+   intensity19,
+   intensity20,
+   intensity21,
+   intensity22,
+   intensity23;
+
+
+   calculate_moments(patches,
+                     &m01,
+                     &m10,
+                     P,
+                     global_id,
+                    intensity0,
+                    intensity1,
+                    intensity2,
+                    intensity3,
+                    intensity4,
+                    intensity5,
+                    intensity6,
+                    intensity7,
+                    intensity8,
+                    intensity9,
+                    intensity10,
+                    intensity11,
+                    intensity12,
+                    intensity13,
+                    intensity14,
+                    intensity15,
+                    intensity16,
+                    intensity17,
+                    intensity18,
+                    intensity19,
+                    intensity20,
+                    intensity21,
+                    intensity22,
+                    intensity23);
+   theta = atan2f(m01, m10);
+
+   // 5) Calculate the sin and cos of theta
+   float sin, cos;
+   sincosf(theta, &sin, &cos); // BOTTLE NECK!!!
+
+   // 6) Sample the patch and return its binary vector
+   // float Ia, Ib;
+   // int ax, ay, bx, by;
+   // int rotated_ax, rotated_ay, rotated_bx, rotated_by;
+   // for (int i = 0; i < 256; ++i) {
+   //   ax = shared_pattern[4*i].x;
+   //   ay = shared_pattern[4*i].y;
+   //   bx = shared_pattern[4*i].z;
+   //   by = shared_pattern[4*i].w;
+   //
+   //   rotated_ax = (int) (cos * ax - sin * ay);
+   //   rotated_ay = (int) (sin * ay + cos * ay);
+   //   rotated_bx = (int) (cos * bx - sin * by);
+   //   rotated_by = (int) (sin * by + cos * by);
+   //
+   //   Ia = patch[rotated_ax + patchDim * rotated_ay];
+   //   Ib = patch[rotated_bx + patchDim * rotated_by];
+   //
+   //   binVector[i] = Ia > Ib;
+   // }
+
+ }
  /*============================================================================*/
  /*
  gpu_oBRIEF
      @patches: global memory patches stored in float4 format
      @pattern: global memory patterns stored in float4 format
  */
- void gpu_rBRIEF(float4* patches, int4* pattern)
+ void gpu_rBRIEF(float4* patches, int4* pattern, double4* train_bin_vec, int K, int P)
  {
-   int N = 1;
    int numBlocks =  10;
    int numThreads = 128;
-   int shared_size = sizeof(float4) * (256 + N*numThreads*2);
-   gpu_rBRIEF_Loop<<<numBlocks, numThreads,shared_size>>>(N, patches, pattern);
+   int shared_size = sizeof(float4) * (256) + sizeof(double4) * K;
+   //gpu_rBRIEF_Loop<<<numBlocks, numThreads,shared_size>>>(N, patches, pattern);
+   gpu_rBRIEF_naive<<<numBlocks, numThreads, shared_size>>>(patches, pattern, train_bin_vec, K, P);
  };
 
 /*============================================================================*/

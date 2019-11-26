@@ -52,16 +52,19 @@ int main(int argc, char const *argv[]) {
   // #endif
 
   // 4) GPU initialization, memory management
-
-  int P = 43;
+  int P = 43; // number of images in the patches array
+  int K = 100;// number of keypoints per patches
   float4 * gpu_patches;
   int4* gpu_pattern;
+  double4* train_bin_vec;
   cudaMallocManaged(&gpu_patches, sizeof(float4) * 24 * P);
-  cudaMallocManaged(&gpu_pattern, sizeof(float4) * 256);
+  cudaMallocManaged(&gpu_pattern, sizeof(int4) * 256);
+  cudaMallocManaged(&train_bin_vec, sizeof(double4) * K);
 
   std::fstream myfile("./patches.txt", std::ios_base::in);
   float a;
 
+  // 5) Get the values of the patches
   for (int i = 0; i < P * 24; i++) {
     myfile >> a;
     float x = a;
@@ -73,6 +76,8 @@ int main(int argc, char const *argv[]) {
     float w = a;
     gpu_patches[i] = make_float4(x,y,z,w);
   }
+
+  // 6) Get the values of the pattern
   for (int i = 0; i < 256; i++) {
     int x = cpu_precompute_BRIEF_pattern[i*4 + 0];
     int y = cpu_precompute_BRIEF_pattern[i*4 + 1];
@@ -81,6 +86,15 @@ int main(int argc, char const *argv[]) {
     gpu_pattern[i] = make_int4(x,y,z,w);
   }
 
+  // 7) Get the values of the training binary vector TODO change this to real binary vector
+  for (int i = 0; i < K; i++) {
+    double x = static_cast <double> (rand()) / static_cast <double> (255.0);
+    double y = static_cast <double> (rand()) / static_cast <double> (255.0);
+    double z = static_cast <double> (rand()) / static_cast <double> (255.0);
+    double w = static_cast <double> (rand()) / static_cast <double> (255.0);
+    train_bin_vec[i] = make_double4(x,y,z,w);
+  }
+
   // 5) Run gpu
-  gpu_rBRIEF(gpu_patches, gpu_pattern);
+  gpu_rBRIEF(gpu_patches, gpu_pattern, train_bin_vec, K, P);
 }
