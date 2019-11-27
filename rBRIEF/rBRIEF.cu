@@ -12,9 +12,9 @@ Specification:
     Size:
       SM Count: 8
       CUDA cores: 1024 (4 warps per SM)
-      Threads per Warp: 32
-      Registers: per SM
-      Shared Memory: per SM
+      Threads: 32 per Warp
+      Registers: 65536 per SM
+      Shared Memory: 49152 per SM
       L1 Cache: 48 KB per SM
       L2 Cache: 1280 KB
 
@@ -34,7 +34,7 @@ cpu_oBRIEF calculate binary descriptor for the patches.
     @binVectorArray: a 1D boolean vector that holds all binary descriptors
     @pattern: the precomputed pattern use for binary sampling.
 */
-void cpu_oBRIEF(int numPatch, int patchDim, float* patchArray, bool* binVectorArray, int* pattern)
+void cpu_rBRIEF(int numPatch, int patchDim, float* patchArray, bool* binVectorArray, int* pattern)
 {
   for (int patchIdx = 0; patchIdx < numPatch; patchIdx+=1) {
 
@@ -93,6 +93,165 @@ gpu_oBRIEF_Kernel
 
 /*============================================================================*/
 /*
+gpu_oBRIEF_Loop iteratively execute the kernel until done
+    @N: number of patches per thread used to compute N angle.
+    @patches: global memory patches stored in float4 format
+    @pattern: global memory patterns stored in float4 format
+*/
+ __global__ void gpu_rBRIEF_Loop(int N, float4* patches, int4* pattern)
+ {
+   // // 1) Shared memory management
+   // extern __shared__ float4 shared[];
+   // int4* sharedPattern = (int4*) shared;
+   // float4* sharedPatches0 = (float4*) &shared[256];
+   // float4* sharedPatches1 = (float4*) &shared[N*blockDim.x*24 + 256];
+   // float4* thisPatches;
+   // float4* nextPatches;
+   // float4* tmp;
+   //
+   // // 2) Load pattern into shared memory (static part of kernel)
+   // int id = threadIdx.x;
+   // int stride = blockDim.x;
+   // for (int i = id; i < 256; i+= stride) {
+   //   sharedPattern[i] = pattern[i];
+   // }
+   //
+   // // 3) Preload patches 0 into shared memory
+   // int start = blockIdx.x * (N*24) + id;
+   // int end   = blockIdx.x * (N*24) + N*24;
+   // for (int i = start; i < end; i+=stride) {
+   //   sharedPatches0[i] = patches[i];
+   // }
+   // thisPatches = sharedPatches0;
+
+   // Kernel Loop begin:
+   //for (int i = blockIdx.x; i < (P - 1) * N * blockDim.x*24; i+= )
+
+ };
+
+ /*============================================================================*/
+ /*
+conflict_free_index return the bank conflict free index
+ */
+
+ __device__ __forceinline__ int conflict_free_index(int local_id, int real_idx)
+ {
+   return real_idx * 128 + local_id;
+ }
+
+ /*============================================================================*/
+ /*
+ gpu_rBRIEF_naive naive implementation of kernel, serve as baseline upon which
+ better kernel are design
+ */
+ __global__ void gpu_rBRIEF_naive(float4* patches, int4* pattern, int train_bin_vec, int K, int P)
+ {
+   // 0) Memory Setup
+   extern __shared__ float shared_patchBank[];
+   int4 private_pattern[32];
+   int    private_train_bin_vec;
+
+   // coordinate initialize in register
+   int coord[96] = { -5, -4, -3, -2, -1, 0, 1, 2, 3, 4,
+                     -5, -4, -3, -2, -1, 0, 1, 2, 3, 4,
+                     -5, -4, -3, -2, -1, 0, 1, 2, 3, 4,
+                     -5, -4, -3, -2, -1, 0, 1, 2, 3, 4,
+                     -5, -4, -3, -2, -1, 0, 1, 2, 3, 4,
+                     -5, -4, -3, -2, -1, 0, 1, 2, 3, 4,
+                     -5, -4, -3, -2, -1, 0, 1, 2, 3, 4,
+                     -5, -4, -3, -2, -1, 0, 1, 2, 3, 4,
+                     -5, -4, -3, -2, -1, 0, 1, 2, 3, 4,
+                     -5, -4, -3, -2, -1, 0};
+
+   // 1) Setup thread ids and stride
+   int local_id = threadIdx.x;
+   int local_stride = blockDim.x;
+   int global_id = blockIdx.x * gridDim.x + local_id;
+   int global_stride = blockDim.x * gridDim.x;
+
+   // 2) Load Sampling Pattern into Private Registers
+   #pragma unroll
+   for (int i = local_id; i < 32; i+=local_stride)
+      private_pattern[i] = pattern[i];
+
+   // 3) Load Training binary vector into Private Register
+   private_train_bin_vec = train_bin_vec;
+
+   // 4) Load my patch into dedicated bank
+   float4 thisNum;
+   for (int i = 0; i < 24; i++) {
+     thisNum = patches[global_id + (i / 4) * P];
+     shared_patchBank[conflict_free_index(local_id, i)]       = thisNum.x;
+     shared_patchBank[conflict_free_index(local_id, i*4 + 1)] = thisNum.y;
+     shared_patchBank[conflict_free_index(local_id, i*4 + 2)] = thisNum.z;
+     shared_patchBank[conflict_free_index(local_id, i*4 + 3)] = thisNum.w;
+   }
+
+   // 5) 1 thread works on 1 patch at a time
+   float m01 = 0.0;
+   float m10 = 0.0;
+   float intensity;
+   float theta;
+   #pragma unroll
+   for (int i = 0; i < 96; i++) {
+    intensity = shared_patchBank[conflict_free_index(local_id, i)];
+    m01       = __fmaf_rd(coord[i], intensity, m01);
+    m10       = __fmaf_rd(coord[i / 10], intensity, m10);
+   }
+   theta = atan2f(m01, m10);
+
+   // 5) Calculate the sin and cos of theta
+   float sin, cos;
+   sincosf(theta, &sin, &cos); // BOTTLE NECK!!!
+
+   // 6) Sample the patch and return its binary vector
+   float Ia, Ib;
+   int ax, ay, bx, by;
+   int rotated_ax, rotated_ay, rotated_bx, rotated_by;
+   int binVector = 0;
+   int result;
+   for (int i = 0; i < 32; ++i) {
+     ax = private_pattern[4*i].x;
+     ay = private_pattern[4*i].y;
+     bx = private_pattern[4*i].z;
+     by = private_pattern[4*i].w;
+
+     rotated_ax = (int) (cos * ax - sin * ay);
+     rotated_ay = (int) (sin * ay + cos * ay);
+     rotated_bx = (int) (cos * bx - sin * by);
+     rotated_by = (int) (sin * by + cos * by);
+
+     Ia = shared_patchBank[conflict_free_index(local_id, (rotated_ax + 9 * rotated_ay))];
+     Ib = shared_patchBank[conflict_free_index(local_id, (rotated_bx + 9 * rotated_by))];
+
+     result = ((int) Ia > Ib) << i;
+     binVector |= result;
+   }
+
+   printf("My binary vector is: %d", binVector);
+
+   // 7) Calculate the Hamming distance.
+
+ }
+ /*============================================================================*/
+ /*
+ gpu_oBRIEF
+     @patches: global memory patches stored in float4 format
+     @pattern: global memory patterns stored in float4 format
+ */
+ void gpu_rBRIEF(float4* patches, int4* pattern, int train_bin_vec, int K, int P)
+ {
+   int numBlocks =  1;
+   int numThreads = 128;
+   int sharedMemSize = 96 * 128;
+   //gpu_rBRIEF_Loop<<<numBlocks, numThreads,shared_size>>>(N, patches, pattern);
+   gpu_rBRIEF_naive<<<numBlocks, numThreads, sharedMemSize>>>(patches, pattern, train_bin_vec, K, P);
+   cudaDeviceSynchronize();
+ };
+
+/*============================================================================*/
+/*
 pipeline_print_rBRIEF is just a testing function
 */
 void pipeline_print_rBRIEF(){ printf("rBRIEF Module active!\n");};
+

@@ -1,5 +1,6 @@
 #include<iostream>
 #include<math.h>
+#include<stdio.h>
 #ifndef RBRIEF_H
 #define RBRIEF_H
 
@@ -287,13 +288,15 @@ static int cpu_precompute_BRIEF_pattern[256*4] =
 };
 
 // cpu functions
-void cpu_oBRIEF(int, int, float*, bool*, int*);
+void cpu_rBRIEF(int, int, float*, bool*, int*);
 
 // gpu functions
 // __device__ void gpu_oBRIEF_Kernel();
-// __global__ void gpu_oBRIEF_Loop();
-// void gpu_oBRIEF();
+__global__ void gpu_oBRIEF_Loop(int, float4* , int4*);
+__global__ void gpu_oBRIEF_naive(int, float4* , int4*, double4*, int, int);
+void gpu_rBRIEF(float4*, int4*, int, int, int);
 
 // test functions
 void pipeline_print_rBRIEF();
 #endif
+
