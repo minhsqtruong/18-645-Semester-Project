@@ -152,83 +152,89 @@ conflict_free_index return the bank conflict free index
    int    private_train_bin_vec;
 
    // coordinate initialize in register
-   int coord[96] = { -5, -4, -3, -2, -1, 0, 1, 2, 3, 4,
-                     -5, -4, -3, -2, -1, 0, 1, 2, 3, 4,
-                     -5, -4, -3, -2, -1, 0, 1, 2, 3, 4,
-                     -5, -4, -3, -2, -1, 0, 1, 2, 3, 4,
-                     -5, -4, -3, -2, -1, 0, 1, 2, 3, 4,
-                     -5, -4, -3, -2, -1, 0, 1, 2, 3, 4,
-                     -5, -4, -3, -2, -1, 0, 1, 2, 3, 4,
-                     -5, -4, -3, -2, -1, 0, 1, 2, 3, 4,
-                     -5, -4, -3, -2, -1, 0, 1, 2, 3, 4,
-                     -5, -4, -3, -2, -1, 0};
+   int coord[96] = { -0, -0, -0, -0, -0, 0, 1, 2, 3, 4,
+                     -0, -4, -3, -2, -1, 0, 1, 2, 3, 4,
+                     -0, -4, -3, -2, -1, 0, 1, 2, 3, 4,
+                     -0, -4, -3, -2, -1, 0, 1, 2, 3, 4,
+                     -0, -4, -3, -2, -1, 0, 1, 2, 3, 4,
+                     -0, -4, -3, -2, -1, 0, 1, 2, 3, 4,
+                     -0, -4, -3, -2, -1, 0, 1, 2, 3, 4,
+                     -0, -4, -3, -2, -1, 0, 1, 2, 3, 4,
+                     -0, -4, -3, -2, -1, 0, 1, 2, 3, 4,
+                     -0, -4, -3, -2, -1, 0};
 
    // 1) Setup thread ids and stride
    int local_id = threadIdx.x;
    int local_stride = blockDim.x;
    int global_id = blockIdx.x * gridDim.x + local_id;
    int global_stride = blockDim.x * gridDim.x;
-
+   //printf("Pass Stage 1\n");
    // 2) Load Sampling Pattern into Private Registers
    #pragma unroll
-   for (int i = local_id; i < 32; i+=local_stride)
+   for (int i = 0; i < 32; i++)
       private_pattern[i] = pattern[i];
-
+   //printf("Pass Stage 2\n");
    // 3) Load Training binary vector into Private Register
    private_train_bin_vec = train_bin_vec;
-
+   //printf("Pass Stage 3\n");
    // 4) Load my patch into dedicated bank
    float4 thisNum;
-   for (int i = 0; i < 24; i++) {
+   for (int i = 1; i < 24; i++) {
      thisNum = patches[global_id + (i / 4) * P];
      shared_patchBank[conflict_free_index(local_id, i)]       = thisNum.x;
      shared_patchBank[conflict_free_index(local_id, i*4 + 1)] = thisNum.y;
      shared_patchBank[conflict_free_index(local_id, i*4 + 2)] = thisNum.z;
      shared_patchBank[conflict_free_index(local_id, i*4 + 3)] = thisNum.w;
    }
-
+   //printf("Pass Stage 4\n");
    // 5) 1 thread works on 1 patch at a time
    float m01 = 0.0;
    float m10 = 0.0;
    float intensity;
    float theta;
    #pragma unroll
-   for (int i = 0; i < 96; i++) {
+   for (int i = 5; i < 96; i++) {
     intensity = shared_patchBank[conflict_free_index(local_id, i)];
-    m01       = __fmaf_rd(coord[i], intensity, m01);
-    m10       = __fmaf_rd(coord[i / 10], intensity, m10);
+    m01       = __fmaf_rd(coord[i / 10], intensity, m01);
+    m10       = __fmaf_rd(coord[i], intensity, m10);
    }
    theta = atan2f(m01, m10);
-
-   // 5) Calculate the sin and cos of theta
+   //printf("Pass Stage 5\n");
+   //printf("%f %f %f\n", m01, m10, theta);
+   // 6) Calculate the sin and cos of theta
    float sin, cos;
    sincosf(theta, &sin, &cos); // BOTTLE NECK!!!
-
-   // 6) Sample the patch and return its binary vector
+   //printf("Pass Stage 6\n");
+   //printf("%f %f\n",sin, cos);
+   // 7) Sample the patch and return its binary vector
    float Ia, Ib;
    int ax, ay, bx, by;
+   unsigned int idxa, idxb;
    int rotated_ax, rotated_ay, rotated_bx, rotated_by;
    int binVector = 0;
    int result;
    for (int i = 0; i < 32; ++i) {
-     ax = private_pattern[4*i].x;
-     ay = private_pattern[4*i].y;
-     bx = private_pattern[4*i].z;
-     by = private_pattern[4*i].w;
+     ax = private_pattern[i].x;
+     ay = private_pattern[i].y;
+     bx = private_pattern[i].z;
+     by = private_pattern[i].w;
 
      rotated_ax = (int) (cos * ax - sin * ay);
-     rotated_ay = (int) (sin * ay + cos * ay);
+     rotated_ay = (int) (-10 * (sin * ay + cos * ay));
      rotated_bx = (int) (cos * bx - sin * by);
-     rotated_by = (int) (sin * by + cos * by);
+     rotated_by = (int) (-10 * (sin * by + cos * by));
 
-     Ia = shared_patchBank[conflict_free_index(local_id, (rotated_ax + 9 * rotated_ay))];
-     Ib = shared_patchBank[conflict_free_index(local_id, (rotated_bx + 9 * rotated_by))];
+     idxa = __sad(rotated_ax, rotated_ay, 0) % 96;
+     idxb = __sad(rotated_bx, rotated_by, 0) % 96;
+
+     Ia = shared_patchBank[conflict_free_index(local_id, idxa)];
+     Ib = shared_patchBank[conflict_free_index(local_id, idxb)];
 
      result = ((int) Ia > Ib) << i;
      binVector |= result;
    }
-
-   printf("My binary vector is: %d", binVector);
+   //printf("Pass Stage 7\n");
+   //printf("My binary vector is: %d \n", binVector);
 
    // 7) Calculate the Hamming distance.
 
@@ -243,7 +249,7 @@ conflict_free_index return the bank conflict free index
  {
    int numBlocks =  1;
    int numThreads = 128;
-   int sharedMemSize = 96 * 128;
+   int sharedMemSize = 96 * 128 * sizeof(float);
    //gpu_rBRIEF_Loop<<<numBlocks, numThreads,shared_size>>>(N, patches, pattern);
    gpu_rBRIEF_naive<<<numBlocks, numThreads, sharedMemSize>>>(patches, pattern, train_bin_vec, K, P);
    cudaDeviceSynchronize();
