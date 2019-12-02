@@ -2,6 +2,7 @@
 #include<iostream>
 #include<chrono>
 #include"match.cuh"
+#include <cuda_runtime.h>
 
 /*=============*/
 #define PRINTSTATS
@@ -12,12 +13,15 @@ int main(int argc, char const *argv[]) {
   //CPU=========================================================================
 
   // 1) Initialized arguments
-  int l1 = 10;
-  int l2 = 10;
+  int l1 = 128;
+  int l2 = 128;
   int width = 256; 
-  bool* binVectorArray1 = (bool*) malloc(sizeof(bool) * l1 * width);
-  bool* binVectorArray2 = (bool*) malloc(sizeof(bool) * l2 * width);
-  int* result = (int*) malloc(sizeof(int) * l1);
+  bool* binVectorArray1;
+  bool* binVectorArray2;
+  int* result;
+  cudaMallocManaged(&binVectorArray1, sizeof(bool) * l1 * width);
+  cudaMallocManaged(&binVectorArray2, sizeof(bool) * l2 * width);
+  cudaMallocManaged(&result, sizeof(int) * l1);
   for (int i = 0; i < l1 * width; i++) {
     bool val = (rand() % 10) > 5;  
     binVectorArray1[i] = val;
@@ -54,17 +58,16 @@ int main(int argc, char const *argv[]) {
   #endif
 
   // 4) GPU initialization, memory management
-  int P = 10000;
-  bool* binVectorArray3;
-  bool* binVectorArray4;
-  cudaMallocManaged(&binVectorArray3, sizeof(bool) * l1 * width);
-  cudaMallocManaged(&binVectorArray4, sizeof(bool) * l2 * width);
-  for (int i = 0; i < l1 * width; i++) {
-    binVectorArray3[i] = (rand() % 1) > 0; 
-  }
-  for (int i = 0; i < l2 * width; i++) {
-    binVectorArray4[i] = (rand() % 1) > 0; 
-  }
+  cudaMallocManaged(&result, sizeof(int) * l1);
   // 5) Run gpu
-  gpu_match(width,l1, l2, binVectorArray3, binVectorArray4);
+  auto t3 = std::chrono::high_resolution_clock::now();
+  gpu_match(width,l1, l2, binVectorArray1, binVectorArray2, result);
+  auto t4 = std::chrono::high_resolution_clock::now();
+  auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>( t4 - t3 ).count();
+  cudaDeviceSynchronize();  
+  std::cout << "GPU reference: " << std::endl;
+  for (int i = 0; i < l1; i++) {
+	std::cout << result[i] << " ";
+  }
+  std::cout << "GPU implementation takes: " << duration2 << " microseconds" <<std::endl;
 }
