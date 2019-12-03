@@ -144,7 +144,7 @@ conflict_free_index return the bank conflict free index
  gpu_rBRIEF_naive naive implementation of kernel, serve as baseline upon which
  better kernel are design
  */
- __global__ void gpu_rBRIEF_naive(float4* patches, int4* pattern, int4* train_bin_vec, int K, int P)
+ __global__ void gpu_rBRIEF_naive(float4* workload, int4* pattern, int4* train_bin_vec, int K, int P, int I)
  {
    // 0) Memory Setup
    extern __shared__ float shared_patchBank[];
@@ -176,8 +176,10 @@ conflict_free_index return the bank conflict free index
       private_pattern[i] = pattern[i];
 
    // 3) Load my patch into dedicated bank
-   for (int itr = 0; itr < 1000; itr++) {
+   for (int img = 0; img < I; img++) {
      float4 thisNum;
+     float4* patches;
+     patches = workload[img * P * (K / 4)]; // 128 patches of 24 float4 each
      #pragma unroll
      for (int i = 1; i < 24; i++) {
        thisNum = patches[global_id + (i / 4) * P];
@@ -310,13 +312,13 @@ conflict_free_index return the bank conflict free index
      @patches: global memory patches stored in float4 format
      @pattern: global memory patterns stored in float4 format
  */
- void gpu_rBRIEF(float4* patches, int4* pattern, int4* train_bin_vec, int K, int P)
+ void gpu_rBRIEF(float4* patches, int4* pattern, int4* train_bin_vec, int K, int P, int I)
  {
    int numBlocks =  1;
    int numThreads = 128;
    int sharedMemSize = 96 * 128 * sizeof(float);
    //gpu_rBRIEF_Loop<<<numBlocks, numThreads,shared_size>>>(N, patches, pattern);
-   gpu_rBRIEF_naive<<<numBlocks, numThreads, sharedMemSize>>>(patches, pattern, train_bin_vec, K, P);
+   gpu_rBRIEF_naive<<<numBlocks, numThreads, sharedMemSize>>>(patches, pattern, train_bin_vec, K, P, I);
    cudaDeviceSynchronize();
  };
 
@@ -325,4 +327,3 @@ conflict_free_index return the bank conflict free index
 pipeline_print_rBRIEF is just a testing function
 */
 void pipeline_print_rBRIEF(){ printf("rBRIEF Module active!\n");};
-

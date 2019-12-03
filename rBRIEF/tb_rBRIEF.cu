@@ -52,29 +52,35 @@ int main(int argc, char const *argv[]) {
   #endif
 
   // 4) GPU initialization, memory management
-  int P = 43; // number of images in the patches array
-  int K = 128;// number of keypoints per patches
+  int K = 96;  // number of pixel per patch
+  int P = 128; // number of patches in one image
+  int I = 1000;// number of images in the array
+  int S = 32;  // number of bits in one binary vector
   float4 * gpu_patches;
+  float  * raw_patches;
   int4* gpu_pattern;
   int4* train_bin_vec;
-  cudaMallocManaged(&gpu_patches, sizeof(float4) * 24 * P);
+  raw_patches = (float *) malloc(sizeof(float) * K * P);
+  cudaMallocManaged(&gpu_patches, sizeof(float4) * (K / 4) * P);
   cudaMallocManaged(&gpu_pattern, sizeof(int4) * 256);
-  cudaMallocManaged(&train_bin_vec, sizeof(int4) * K);
+  cudaMallocManaged(&train_bin_vec, sizeof(int4) * (S / 4) * P);
 
   std::fstream myfile("./patches.txt", std::ios_base::in);
   float a;
 
   // 5) Get the values of the patches
-  for (int i = 0; i < P * 24; i++) {
+  for (int pixel = 0; pixel < K * P; pixel++) {
     myfile >> a;
-    float x = a;
-    myfile >> a;
-    float y = a;
-    myfile >> a;
-    float z = a;
-    myfile >> a;
-    float w = a;
-    gpu_patches[i] = make_float4(x,y,z,w);
+    raw_patches[pixel] = a;
+  }
+  for (int img = 0; img < I; img++) {
+    for (int pixel = 0; pixel < P / 4; pixel++) {
+      float x = raw_patches[pixel * 4 + 0];
+      float y = raw_patches[pixel * 4 + 1];
+      float z = raw_patches[pixel * 4 + 2];
+      float w = raw_patches[pixel * 4 + 3];
+      gpu_patches[img * (P / 4) + pixel] = make_float4(x,y,z,w);
+    }
   }
 
   // 6) Get the values of the pattern
@@ -96,6 +102,5 @@ int main(int argc, char const *argv[]) {
   }
 
   // 8) Run gpu
-  gpu_rBRIEF(gpu_patches, gpu_pattern, train_bin_vec, K, P);
+  gpu_rBRIEF(gpu_patches, gpu_pattern, train_bin_vec, K, P, I);
 }
-
