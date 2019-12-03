@@ -168,7 +168,7 @@ conflict_free_index return the bank conflict free index
 
    // 1) Setup thread ids
    int local_id = threadIdx.x;
-   int global_id = blockIdx.x * gridDim.x + local_id;
+   //int global_id = blockIdx.x * gridDim.x + local_id;
 
    // 2) Load Sampling Pattern into Private Registers
    #pragma unroll
@@ -176,18 +176,30 @@ conflict_free_index return the bank conflict free index
       private_pattern[i] = pattern[i];
 
    // 3) Load my patch into dedicated bank
-   for (int img = 0; img < I; img++) {
-     float4 thisNum;
+   for (int img = blockIdx.x; img < I; img+=gridDim.x) {
+
      float4* patches;
-     patches = workload[img * P * (K / 4)]; // 128 patches of 24 float4 each
+     patches = &(workload[img * 3072]); // 128 patches of 24 float4 each
+
+     #ifdef rBRIEFDEBUG
+       if (threadIdx.x == 0)
+        printf("Working on img: %d\n", img);
+     #endif
+
+     float4 thisNum;//= make_float4(0.0,0.0,0.0,0.0);
      #pragma unroll
      for (int i = 1; i < 24; i++) {
-       thisNum = patches[global_id + (i / 4) * P];
-       shared_patchBank[conflict_free_index(local_id, i)]       = thisNum.x;
+       thisNum = patches[i * 128 + local_id];
+       shared_patchBank[conflict_free_index(local_id, i*4 + 0)] = thisNum.x;
        shared_patchBank[conflict_free_index(local_id, i*4 + 1)] = thisNum.y;
        shared_patchBank[conflict_free_index(local_id, i*4 + 2)] = thisNum.z;
        shared_patchBank[conflict_free_index(local_id, i*4 + 3)] = thisNum.w;
      }
+
+     #ifdef rBRIEFDEBUG
+       if (threadIdx.x == 0)
+        printf("Patch is loaded into private registers\n");
+     #endif
 
      // 4) 1 thread works on 1 patch at a time
      float m01 = 0.0;
@@ -312,14 +324,13 @@ conflict_free_index return the bank conflict free index
      @patches: global memory patches stored in float4 format
      @pattern: global memory patterns stored in float4 format
  */
- void gpu_rBRIEF(float4* patches, int4* pattern, int4* train_bin_vec, int K, int P, int I)
+ void gpu_rBRIEF(float4* patches, int4* pattern, int4* train_bin_vec, int K, int P, int I, int WPB)
  {
-   int numBlocks =  1;
+   int numBlocks =  I / WPB;
    int numThreads = 128;
    int sharedMemSize = 96 * 128 * sizeof(float);
    //gpu_rBRIEF_Loop<<<numBlocks, numThreads,shared_size>>>(N, patches, pattern);
    gpu_rBRIEF_naive<<<numBlocks, numThreads, sharedMemSize>>>(patches, pattern, train_bin_vec, K, P, I);
-   cudaDeviceSynchronize();
  };
 
 /*============================================================================*/

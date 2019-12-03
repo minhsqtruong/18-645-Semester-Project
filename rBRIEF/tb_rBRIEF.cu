@@ -9,6 +9,8 @@
 /*=============*/
 
 int main(int argc, char const *argv[]) {
+
+  int WPB = argv[1];
   //
   // //CPU=========================================================================
   //
@@ -61,11 +63,11 @@ int main(int argc, char const *argv[]) {
   int4* gpu_pattern;
   int4* train_bin_vec;
   raw_patches = (float *) malloc(sizeof(float) * K * P);
-  cudaMallocManaged(&gpu_patches, sizeof(float4) * (K / 4) * P);
+  cudaMallocManaged(&gpu_patches, sizeof(float4) * (K / 4) * P * I);
   cudaMallocManaged(&gpu_pattern, sizeof(int4) * 256);
   cudaMallocManaged(&train_bin_vec, sizeof(int4) * (S / 4) * P);
 
-  std::fstream myfile("./patches.txt", std::ios_base::in);
+  std::fstream myfile("./141patches.txt", std::ios_base::in);
   float a;
 
   // 5) Get the values of the patches
@@ -74,12 +76,12 @@ int main(int argc, char const *argv[]) {
     raw_patches[pixel] = a;
   }
   for (int img = 0; img < I; img++) {
-    for (int pixel = 0; pixel < P / 4; pixel++) {
+    for (int pixel= 0; pixel< (K * P) / 4; pixel++) {
       float x = raw_patches[pixel * 4 + 0];
       float y = raw_patches[pixel * 4 + 1];
       float z = raw_patches[pixel * 4 + 2];
       float w = raw_patches[pixel * 4 + 3];
-      gpu_patches[img * (P / 4) + pixel] = make_float4(x,y,z,w);
+      gpu_patches[img * (K * P) / 4 + pixel] = make_float4(x,y,z,w);
     }
   }
 
@@ -102,5 +104,8 @@ int main(int argc, char const *argv[]) {
   }
 
   // 8) Run gpu
-  gpu_rBRIEF(gpu_patches, gpu_pattern, train_bin_vec, K, P, I);
+  for (int run = 0; run < 1; run++) {
+    gpu_rBRIEF(gpu_patches, gpu_pattern, train_bin_vec, K, P, I, WPB);
+    cudaDeviceSynchronize();
+  }
 }

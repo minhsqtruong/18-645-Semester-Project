@@ -297,7 +297,7 @@ void cpu_rBRIEF(int, int, float*, bool*, int*);
 // gpu functions
 // __device__ void gpu_oBRIEF_Kernel();
 __global__ void gpu_rBRIEF_naive(float4* ,int4*, int4*, int, int, int);
-void gpu_rBRIEF(float4*, int4*, int4* , int, int, int);
+void gpu_rBRIEF(float4*, int4*, int4* , int, int, int, int);
 
 // test functions
 void pipeline_print_rBRIEF();
