@@ -53,13 +53,13 @@ int main(int argc, char const *argv[]) {
 
   // 4) GPU initialization, memory management
   int P = 43; // number of images in the patches array
-  int K = 100;// number of keypoints per patches
+  int K = 128;// number of keypoints per patches
   float4 * gpu_patches;
   int4* gpu_pattern;
-  double4* train_bin_vec;
+  int4* train_bin_vec;
   cudaMallocManaged(&gpu_patches, sizeof(float4) * 24 * P);
   cudaMallocManaged(&gpu_pattern, sizeof(int4) * 256);
-  cudaMallocManaged(&train_bin_vec, sizeof(double4) * K);
+  cudaMallocManaged(&train_bin_vec, sizeof(int4) * K);
 
   std::fstream myfile("./patches.txt", std::ios_base::in);
   float a;
@@ -86,7 +86,16 @@ int main(int argc, char const *argv[]) {
     gpu_pattern[i] = make_int4(x,y,z,w);
   }
 
-  // 5) Run gpu
-  gpu_rBRIEF(gpu_patches, gpu_pattern, 123, K, P);
+  // 7) Get the values of the trained binary vector
+  for (int i = 0; i < 32; i++) {
+    int x = 460;
+    int y = 146;
+    int z = 241;
+    int w = 124;
+    train_bin_vec[i] = make_int4(x, y, z, w);
+  }
+
+  // 8) Run gpu
+  gpu_rBRIEF(gpu_patches, gpu_pattern, train_bin_vec, K, P);
 }
 

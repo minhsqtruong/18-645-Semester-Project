@@ -4,6 +4,10 @@
 #ifndef RBRIEF_H
 #define RBRIEF_H
 
+/*----------------*/
+//#define rBRIEFDEBUG
+/*----------------*/
+
 /*============================================================================*/
 /*
 printMatrix prints out 2D matrix of any type.
@@ -292,9 +296,8 @@ void cpu_rBRIEF(int, int, float*, bool*, int*);
 
 // gpu functions
 // __device__ void gpu_oBRIEF_Kernel();
-__global__ void gpu_oBRIEF_Loop(int, float4* , int4*);
-__global__ void gpu_oBRIEF_naive(int, float4* , int4*, double4*, int, int);
-void gpu_rBRIEF(float4*, int4*, int, int, int);
+__global__ void gpu_rBRIEF_naive(float4* ,int4*, int4*, int, int);
+void gpu_rBRIEF(float4*, int4*, int4* , int, int);
 
 // test functions
 void pipeline_print_rBRIEF();
