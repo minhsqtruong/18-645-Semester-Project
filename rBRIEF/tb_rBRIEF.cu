@@ -3,14 +3,14 @@
 //#include<chrono>
 #include"rBRIEF.cuh"
 #include <fstream>
-
+#include <stdlib.h> 
 /*=============*/
 #define PRINTSTATS
 /*=============*/
 
 int main(int argc, char const *argv[]) {
 
-  int WPB = argv[1];
+  int WPB = atoi(argv[1]);
   //
   // //CPU=========================================================================
   //
@@ -109,3 +109,4 @@ int main(int argc, char const *argv[]) {
     cudaDeviceSynchronize();
   }
 }
+

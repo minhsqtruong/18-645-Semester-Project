@@ -9,6 +9,8 @@ all: rBRIEF.cu
 test: all tb_rBRIEF.cu
 	${COMPILER} -o tb_rBRIEF tb_rBRIEF.cu rBRIEF.o
 
+profile: 
+	
 clean:
 	rm -rf tmp* tb_rBRIEF *.o
 
