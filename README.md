@@ -32,18 +32,13 @@ sure the pipeline works.
 
 ### Directories
 
-* `./app` stores any applications, presentations related program such
-as ORB demo program and further documentation on ORB.
 * `./data` stores data and data related program (cleaning, parsing, formatting)
 used by other directories.
-* `./lib` stores the shared library `.so` objects that can be used by any
-applications.
-* `./match` stores the Feature Matching module programs testbenches.
 * `./oFAST` stores the oriented FAST module programs testbenches.
 * `./rBRIEF` stores the rotated BRIEF module programs testbenches.
-* `orb.h` links all modules together.
-* `orb.c` implements neccessary pipeline peripherals.
-* `tb_orb.c` test the pipeline.
+* `orb.cuh` links all modules together.
+* `orb.cu` implements neccessary pipeline peripherals.
+* `tb_orb.cu` test the pipeline.
 
 Each Module directory have 4 starting files: `Makefile` `*.c` `*.h` `tb_*`.
 These files are the minimum components needed to construct the pipeline.

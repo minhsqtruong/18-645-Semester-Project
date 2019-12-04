@@ -2,9 +2,9 @@
 # Don't modify this file, each module has it s own Makefile. Those can be
 # modified to taste, depending on the module
 
-SUBDIR = match oFAST rBRIEF
-EXEC = match/match.o oFAST/oFAST.o rBRIEF/rBRIEF.o
-COMPILER=nvcc
+SUBDIR = oFAST rBRIEF
+EXEC = oFAST/oFAST.o rBRIEF/rBRIEF.o
+COMPILER=/usr/local/cuda/bin/nvcc
 #LDFLAGS= neccessary LD libraries
 all:
 	for i in ${SUBDIR}; do \

@@ -1,4 +1,4 @@
-COMPILER=nvcc
+COMPILER=/usr/local/cuda/bin/nvcc
 #LDFLAGS= neccessary LD libraries
 
 # Must return oFAST.o
