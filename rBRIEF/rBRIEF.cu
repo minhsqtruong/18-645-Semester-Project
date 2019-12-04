@@ -148,6 +148,7 @@ conflict_free_index return the bank conflict free index
  {
    // 0) Memory Setup
    extern __shared__ float shared_patchBank[];
+   int* minVal;
    int4   private_pattern[32];
    int4   thisBuff, nextBuff;
    int train_vec_x, train_vec_y, train_vec_z, train_vec_w;
@@ -177,7 +178,7 @@ conflict_free_index return the bank conflict free index
    for (int img = blockIdx.x; img < I; img+=gridDim.x) {
 
      float4* patches;
-     int * res
+     int * res;
      patches = &(workload[img * 3072]); // 128 patches of 24 float4 each
      res     = &(output[img * 128]);    // 128 binary vector per image
      #ifdef rBRIEFDEBUG
@@ -276,39 +277,49 @@ conflict_free_index return the bank conflict free index
 
     // 7) Preload binary vector from Global Memory and perform Hamming distance calculation
     nextBuff = train_bin_vec[0];
-    int minVal;
+    float tmp = shared_patchBank[0]; // Borrow one value of shared memory
+    minVal = (int*) &(shared_patchBank[0]);
     for (int i = 1; i < 32; i++) {
       thisBuff = nextBuff;
       nextBuff = train_bin_vec[i];
 
+      *minVal = 32;
       train_vec_x = thisBuff.x;
       train_vec_x ^= binVector;
       train_vec_x = __popc(train_vec_x);
-      atomicMin(&minVal, train_vec_x);
-      if(train_vec_x == minVal)
+      atomicMin(minVal, train_vec_x);
+      if(train_vec_x == *minVal)
         res[i*4 + 0] = local_id;
+      __syncthreads();
 
+      *minVal = 32;
       train_vec_y = thisBuff.y;
       train_vec_y ^= binVector;
       train_vec_y = __popc(train_vec_y);
-      atomicMin(&minVal, train_vec_y);
-      if(train_vec_y == minVal)
+      atomicMin(minVal, train_vec_y);
+      if(train_vec_y == *minVal)
         res[i*4 + 1] = local_id;
+      __syncthreads();
 
+      *minVal = 32;
       train_vec_z = thisBuff.z;
       train_vec_z ^= binVector;
       train_vec_z = __popc(train_vec_z);
-      atomicMin(&minVal, train_vec_z);
-      if(train_vec_z == minVal)
+      atomicMin(minVal, train_vec_z);
+      if(train_vec_z == *minVal)
         res[i*4 + 2] = local_id;
+      __syncthreads();
 
+      *minVal = 32;
       train_vec_w = thisBuff.w;
       train_vec_w ^= binVector;
       train_vec_w = __popc(train_vec_w);
-      atomicMin(&minVal, train_vec_w);
-      if(train_vec_w == minVal)
+      atomicMin(minVal, train_vec_w);
+      if(train_vec_w == *minVal)
         res[i*4 + 3] = local_id;
+      __syncthreads();
    }
+   shared_patchBank[0] = tmp; // return the shared memory back to normal
   }
  }
  /*============================================================================*/
@@ -331,3 +342,4 @@ conflict_free_index return the bank conflict free index
 pipeline_print_rBRIEF is just a testing function
 */
 void pipeline_print_rBRIEF(){ printf("rBRIEF Module active!\n");};
+

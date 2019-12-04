@@ -434,3 +434,4 @@ void gpu_rBRIEF(float4*, int*, int4*, int4* , int, int, int, int);
 // test functions
 void pipeline_print_rBRIEF();
 #endif
+

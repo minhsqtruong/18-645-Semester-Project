@@ -57,7 +57,7 @@ int main(int argc, char const *argv[]) {
   int K = 96;  // number of pixel per patch
   int P = 128; // number of patches in one image
   int I = 1000;// number of images in the array
-  int S = 32;  // number of bits in one binary vector
+  //int S = 32;  // number of bits in one binary vector
   float4 * gpu_patches;
   float  * raw_patches;
   int4* gpu_pattern;
@@ -109,4 +109,8 @@ int main(int argc, char const *argv[]) {
   gpu_rBRIEF(gpu_patches, gpu_output, gpu_pattern, train_bin_vec, K, P, I, WPB);
   cudaDeviceSynchronize();
 
+  #ifdef rBRIEFDEBUG
+  for (int i = 0; i < 128; i++)
+	printf("%d \n", gpu_output[i]);
+  #endif
 }
