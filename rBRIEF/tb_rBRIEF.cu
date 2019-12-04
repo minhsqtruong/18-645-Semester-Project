@@ -96,7 +96,7 @@ int main(int argc, char const *argv[]) {
     gpu_pattern[i] = make_int4(x,y,z,w);
   }
 
-  7) Get the values of the trained binary vector
+  //7) Get the values of the trained binary vector
   for (int i = 0; i < 32; i++) {
     int x = cpu_precomputed_BRIEF_binvec[i*4 + 0];
     int y = cpu_precomputed_BRIEF_binvec[i*4 + 1];

@@ -144,15 +144,13 @@ conflict_free_index return the bank conflict free index
  gpu_rBRIEF_naive naive implementation of kernel, serve as baseline upon which
  better kernel are design
  */
- __global__ void gpu_rBRIEF_naive(float4* workload, int4* pattern, int4* train_bin_vec, int K, int P, int I, int* res)
+ __global__ void gpu_rBRIEF_naive(float4* workload, int4* pattern, int4* train_bin_vec, int K, int P, int I)
  {
    // 0) Memory Setup
    extern __shared__ float shared_patchBank[];
    int4   private_pattern[32];
-   // int4   train_bin_vec_buff0[2];
-   // int4   train_bin_vec_buff1[2];
-   // int4*  thisBuff, nextBuff, tmp;
-   // unsigned int train_vec_x, train_vec_y, train_vec_z, train_vec_w;
+   int4   thisBuff, nextBuff;
+   int train_vec_x, train_vec_y, train_vec_z, train_vec_w;
 
    // coordinate initialize in Private Registers
    int coord[96] = { -0, -0, -0, -0, -0, 0, 1, 2, 3, 4,
@@ -255,7 +253,6 @@ conflict_free_index return the bank conflict free index
        binVector |= result;
      }
 
-     res[local_id] = binVector;
      #ifdef rBRIEFDEBUG
      if (threadIdx.x == 0) {
        printf("%d", binVector);
@@ -273,52 +270,32 @@ conflict_free_index return the bank conflict free index
     #endif
 
      // 7) Preload binary vector from Global Memory and perform Hamming distance calculation
-     // train_bin_vec_buff0[0] = train_bin_vec[0];
-     // train_bin_vec_buff0[1] = train_bin_vec[1];
-     // nextBuff = train_bin_vec_buff0;
-     // for (int i = 1; i < 16; i++) {
-     //   tmp = thisBuff;
-     //   thisBuff = nextBuff;
-     //   nextBuff = tmp;
-     //   // Preload
-     //   nextBuff[0] = train_bin_vec[i * 2 + 0];
-     //   nextBuff[1] = train_bin_vec[i * 2 + 1];
-     //
-     //   // Calculate distance
-     //   train_vec_x = thisBuff[0].x;
-     //   train_vec_y = thisBuff[0].y;
-     //   train_vec_z = thisBuff[0].z;
-     //   train_vec_w = thisBuff[0].w;
-     //
-     //   train_vec_x ^= binVector;
-     //   train_vec_y ^= binVector;
-     //   train_vec_z ^= binVector;
-     //   train_vec_w ^= binVector;
-     //
-     //   train_vec_x = __popc(train_vec_x);
-     //   train_vec_y = __popc(train_vec_y);
-     //   train_vec_z = __popc(train_vec_z);
-     //   train_vec_w = __popc(train_vec_w);
-     //
-     //   // Store Back
-     //
-     //   train_vec_x = thisBuff[1].x;
-     //   train_vec_y = thisBuff[1].y;
-     //   train_vec_z = thisBuff[1].z;
-     //   train_vec_w = thisBuff[1].w;
-     //
-     //   train_vec_x ^= binVector;
-     //   train_vec_y ^= binVector;
-     //   train_vec_z ^= binVector;
-     //   train_vec_w ^= binVector;
-     //
-     //   train_vec_x = __popc(train_vec_x);
-     //   train_vec_y = __popc(train_vec_y);
-     //   train_vec_z = __popc(train_vec_z);
-     //   train_vec_w = __popc(train_vec_w);
+     buff[0] = train_bin_vec[0];
+     buff[1] = train_bin_vec[1];
+     nextBuff = &(buff[0]);
+     for (int i = 0; i < 31; i++) {
+       thisBuff = train_bin_vec[i];
+       nextBuff = train_bin_vec[i + 1];
+
+       // Calculate distance
+       train_vec_x = thisBuff.x;
+       train_vec_y = thisBuff.y;
+       train_vec_z = thisBuff.z;
+       train_vec_w = thisBuff.w;
+
+       train_vec_x ^= binVector;
+       train_vec_y ^= binVector;
+       train_vec_z ^= binVector;
+       train_vec_w ^= binVector;
+
+       train_vec_x = __popc(train_vec_x);
+       train_vec_y = __popc(train_vec_y);
+       train_vec_z = __popc(train_vec_z);
+       train_vec_w = __popc(train_vec_w);
 
        // Store Back
-     //}
+       
+     }
   }
  }
  /*============================================================================*/
