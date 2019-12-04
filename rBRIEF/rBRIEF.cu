@@ -144,7 +144,7 @@ conflict_free_index return the bank conflict free index
  gpu_rBRIEF_naive naive implementation of kernel, serve as baseline upon which
  better kernel are design
  */
- __global__ void gpu_rBRIEF_naive(float4* workload, int4* pattern, int4* train_bin_vec, int K, int P, int I)
+ __global__ void gpu_rBRIEF_naive(float4* workload, int* output, int4* pattern, int4* train_bin_vec, int K, int P, int I)
  {
    // 0) Memory Setup
    extern __shared__ float shared_patchBank[];
@@ -177,8 +177,9 @@ conflict_free_index return the bank conflict free index
    for (int img = blockIdx.x; img < I; img+=gridDim.x) {
 
      float4* patches;
+     int * res
      patches = &(workload[img * 3072]); // 128 patches of 24 float4 each
-
+     res     = &(output[img * 128]);    // 128 binary vector per image
      #ifdef rBRIEFDEBUG
        if (threadIdx.x == 0)
         printf("Working on img: %d\n", img);
@@ -210,7 +211,11 @@ conflict_free_index return the bank conflict free index
       m01       = __fmaf_rd(coord[i / 10], intensity, m01);
       m10       = __fmaf_rd(coord[i], intensity, m10);
      }
-     theta = atan2f(m01, m10);
+
+     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+     theta = atan2f(m01, m10); // BOTTLE NECK
+     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
      #ifdef rBRIEFDEBUG
      if (threadIdx.x == 0)
       printf("m01: %f m10: %f theta: %f\n", m01, m10, theta);
@@ -218,7 +223,7 @@ conflict_free_index return the bank conflict free index
 
      // 5) Calculate the sin and cos of theta
      float sin, cos;
-     sincosf(theta, &sin, &cos); // BOTTLE NECK!!!
+     sincosf(theta, &sin, &cos);
      #ifdef rBRIEFDEBUG
      if (threadIdx.x == 0)
        printf("sin: %f cos: %f\n",sin, cos);
@@ -269,33 +274,41 @@ conflict_free_index return the bank conflict free index
     }
     #endif
 
-     // 7) Preload binary vector from Global Memory and perform Hamming distance calculation
-     buff[0] = train_bin_vec[0];
-     buff[1] = train_bin_vec[1];
-     nextBuff = &(buff[0]);
-     for (int i = 0; i < 31; i++) {
-       thisBuff = train_bin_vec[i];
-       nextBuff = train_bin_vec[i + 1];
+    // 7) Preload binary vector from Global Memory and perform Hamming distance calculation
+    nextBuff = train_bin_vec[0];
+    int minVal;
+    for (int i = 1; i < 32; i++) {
+      thisBuff = nextBuff;
+      nextBuff = train_bin_vec[i];
 
-       // Calculate distance
-       train_vec_x = thisBuff.x;
-       train_vec_y = thisBuff.y;
-       train_vec_z = thisBuff.z;
-       train_vec_w = thisBuff.w;
+      train_vec_x = thisBuff.x;
+      train_vec_x ^= binVector;
+      train_vec_x = __popc(train_vec_x);
+      atomicMin(&minVal, train_vec_x);
+      if(train_vec_x == minVal)
+        res[i*4 + 0] = local_id;
 
-       train_vec_x ^= binVector;
-       train_vec_y ^= binVector;
-       train_vec_z ^= binVector;
-       train_vec_w ^= binVector;
+      train_vec_y = thisBuff.y;
+      train_vec_y ^= binVector;
+      train_vec_y = __popc(train_vec_y);
+      atomicMin(&minVal, train_vec_y);
+      if(train_vec_y == minVal)
+        res[i*4 + 1] = local_id;
 
-       train_vec_x = __popc(train_vec_x);
-       train_vec_y = __popc(train_vec_y);
-       train_vec_z = __popc(train_vec_z);
-       train_vec_w = __popc(train_vec_w);
+      train_vec_z = thisBuff.z;
+      train_vec_z ^= binVector;
+      train_vec_z = __popc(train_vec_z);
+      atomicMin(&minVal, train_vec_z);
+      if(train_vec_z == minVal)
+        res[i*4 + 2] = local_id;
 
-       // Store Back
-       
-     }
+      train_vec_w = thisBuff.w;
+      train_vec_w ^= binVector;
+      train_vec_w = __popc(train_vec_w);
+      atomicMin(&minVal, train_vec_w);
+      if(train_vec_w == minVal)
+        res[i*4 + 3] = local_id;
+   }
   }
  }
  /*============================================================================*/
@@ -304,13 +317,13 @@ conflict_free_index return the bank conflict free index
      @patches: global memory patches stored in float4 format
      @pattern: global memory patterns stored in float4 format
  */
- void gpu_rBRIEF(float4* patches, int4* pattern, int4* train_bin_vec, int K, int P, int I, int WPB)
+ void gpu_rBRIEF(float4* patches, int* output, int4* pattern, int4* train_bin_vec, int K, int P, int I, int WPB)
  {
    int numBlocks =  I / WPB;
    int numThreads = 128;
    int sharedMemSize = 96 * 128 * sizeof(float);
    //gpu_rBRIEF_Loop<<<numBlocks, numThreads,shared_size>>>(N, patches, pattern);
-   gpu_rBRIEF_naive<<<numBlocks, numThreads, sharedMemSize>>>(patches, pattern, train_bin_vec, K, P, I);
+   gpu_rBRIEF_naive<<<numBlocks, numThreads, sharedMemSize>>>(patches, output, pattern, train_bin_vec, K, P, I);
  };
 
 /*============================================================================*/

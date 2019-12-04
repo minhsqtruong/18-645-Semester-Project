@@ -62,12 +62,12 @@ int main(int argc, char const *argv[]) {
   float  * raw_patches;
   int4* gpu_pattern;
   int4* train_bin_vec;
-  int * result;
+  int * gpu_output;
   raw_patches = (float *) malloc(sizeof(float) * K * P);
   cudaMallocManaged(&gpu_patches, sizeof(float4) * (K / 4) * P * I);
   cudaMallocManaged(&gpu_pattern, sizeof(int4) * 256);
   cudaMallocManaged(&train_bin_vec, sizeof(int4) * (P/4));
-  cudaMallocManaged(&result, sizeof(int) * P);
+  cudaMallocManaged(&gpu_output, sizeof(int) * P * I);
 
   std::fstream myfile("./141patches.txt", std::ios_base::in);
   float a;
@@ -106,11 +106,7 @@ int main(int argc, char const *argv[]) {
   }
 
   // 8) Run gpu
-  gpu_rBRIEF(gpu_patches, gpu_pattern, train_bin_vec, K, P, I, WPB);
+  gpu_rBRIEF(gpu_patches, gpu_output, gpu_pattern, train_bin_vec, K, P, I, WPB);
   cudaDeviceSynchronize();
 
-  for (int i = 0; i < P; i ++) {
-    printf("%d\n", i);
-    printf("%d\n", result[i]);
-  }
 }
