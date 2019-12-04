@@ -5,12 +5,12 @@
 
 
 // cpu functions
-void cpu_match(int, int, int, bool*, bool*, int*);
+void cpu_match(int, int, int*, int*, int*);
 
 // gpu functions
 // __device__ void gpu_match_Kernel();
-__global__ void gpu_match_Loop(int, int, int, bool*, bool*, int*);
-void gpu_match(int, int, int, bool*, bool*, int*);
+__global__ void gpu_match_Loop(int, int, int*, int*, int*, int*);
+void gpu_match( int, int, int*, int*, int*, int*);
 
 // test functions
 void pipeline_print_match();

@@ -13,32 +13,32 @@ int main(int argc, char const *argv[]) {
   //CPU=========================================================================
 
   // 1) Initialized arguments
-  int l1 = 128;
-  int l2 = 128;
-  int width = 256; 
-  bool* binVectorArray1;
-  bool* binVectorArray2;
+  int l1 = 60000;
+  int l2 = 60000;
+  int* binVectorArray1;
+  int* binVectorArray2;
   int* result;
-  cudaMallocManaged(&binVectorArray1, sizeof(bool) * l1 * width);
-  cudaMallocManaged(&binVectorArray2, sizeof(bool) * l2 * width);
+  cudaMallocManaged(&binVectorArray1, sizeof(int) * l1);
+  cudaMallocManaged(&binVectorArray2, sizeof(int) * l2);
   cudaMallocManaged(&result, sizeof(int) * l1);
-  for (int i = 0; i < l1 * width; i++) {
-    bool val = (rand() % 10) > 5;  
-    binVectorArray1[i] = val;
-    binVectorArray2[i] = val;
+  for (int i = 0; i < l1; i++) {  
+    binVectorArray1[i] = i;
+    binVectorArray2[i] = i;
   }
   // 2) Run cpu reference
   auto t1 = std::chrono::high_resolution_clock::now();
-  cpu_match(width, l1, l1, binVectorArray1, binVectorArray2, result);
+  //cpu_match(l1, l2, binVectorArray1, binVectorArray2, result);
   auto t2 = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::microseconds>( t2 - t1 ).count();
   
   #ifdef PRINTSTATS
-  std::cout << "CPU reference: " << std::endl;
+  //std::cout << "CPU reference: " << std::endl;
   for (int i = 0; i < l1; i++) {
-	std::cout << result[i] << " ";
+	//std::cout << result[i] << " ";
   }
-  std::cout << "CPU implementation takes: " << duration << " microseconds" <<std::endl;
+  //int throughputC = (l1 * 4 + l2 * 4 )/ duration; 
+  //std::cout << "CPU implementation takes: " << duration << " microseconds" <<std::endl;
+   //std::cout << "GPU implementation : " << throughputC << "bytes/ microseconds" <<std::endl;
   #endif
 
   //GPU=========================================================================
@@ -61,13 +61,18 @@ int main(int argc, char const *argv[]) {
   cudaMallocManaged(&result, sizeof(int) * l1);
   // 5) Run gpu
   auto t3 = std::chrono::high_resolution_clock::now();
-  gpu_match(width,l1, l2, binVectorArray1, binVectorArray2, result);
+  int * distances;
+  cudaMallocManaged(&distances, sizeof(int) * l1 * l2);
+  gpu_match(l1, l2, binVectorArray1, binVectorArray2, result, distances);
   auto t4 = std::chrono::high_resolution_clock::now();
   auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>( t4 - t3 ).count();
   cudaDeviceSynchronize();  
-  std::cout << "GPU reference: " << std::endl;
+  //std::cout << "GPU reference: " << std::endl;
   for (int i = 0; i < l1; i++) {
-	std::cout << result[i] << " ";
+	//std::cout << result[i] << " ";
   }
+  int throughput = (l1 * 4 + l2 * 4)/ duration2;  
   std::cout << "GPU implementation takes: " << duration2 << " microseconds" <<std::endl;
+  std::cout << "GPU implementation : " << throughput << "bytes/ microseconds" <<std::endl;
+  
 }
