@@ -144,7 +144,7 @@ conflict_free_index return the bank conflict free index
  gpu_rBRIEF_naive naive implementation of kernel, serve as baseline upon which
  better kernel are design
  */
- __global__ void gpu_rBRIEF_naive(float4* workload, int4* pattern, int4* train_bin_vec, int K, int P, int I)
+ __global__ void gpu_rBRIEF_naive(float4* workload, int4* pattern, int4* train_bin_vec, int K, int P, int I, int* res)
  {
    // 0) Memory Setup
    extern __shared__ float shared_patchBank[];
@@ -254,8 +254,11 @@ conflict_free_index return the bank conflict free index
        result = ((int) Ia > Ib) << i;
        binVector |= result;
      }
+
+     res[local_id] = binVector;
      #ifdef rBRIEFDEBUG
      if (threadIdx.x == 0) {
+       printf("%d", binVector);
        printf("My Binary vector is: ");
        while (binVector) {
           if (binVector & 1)

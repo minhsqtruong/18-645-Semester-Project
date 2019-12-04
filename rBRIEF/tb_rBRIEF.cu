@@ -3,7 +3,7 @@
 //#include<chrono>
 #include"rBRIEF.cuh"
 #include <fstream>
-#include <stdlib.h> 
+#include <stdlib.h>
 /*=============*/
 #define PRINTSTATS
 /*=============*/
@@ -40,7 +40,7 @@ int main(int argc, char const *argv[]) {
   // //GPU=========================================================================
   //
   // 3) Check GPU stats
-  #ifdef rBRIEFDEBUG 
+  #ifdef rBRIEFDEBUG
   struct cudaDeviceProp prop;
   cudaGetDeviceProperties(&prop, 0);
   std::cout << std::endl;
@@ -62,10 +62,12 @@ int main(int argc, char const *argv[]) {
   float  * raw_patches;
   int4* gpu_pattern;
   int4* train_bin_vec;
+  int * result;
   raw_patches = (float *) malloc(sizeof(float) * K * P);
   cudaMallocManaged(&gpu_patches, sizeof(float4) * (K / 4) * P * I);
   cudaMallocManaged(&gpu_pattern, sizeof(int4) * 256);
-  cudaMallocManaged(&train_bin_vec, sizeof(int4) * (S / 4) * P);
+  cudaMallocManaged(&train_bin_vec, sizeof(int4) * (P/4));
+  cudaMallocManaged(&result, sizeof(int) * P);
 
   std::fstream myfile("./141patches.txt", std::ios_base::in);
   float a;
@@ -94,19 +96,21 @@ int main(int argc, char const *argv[]) {
     gpu_pattern[i] = make_int4(x,y,z,w);
   }
 
-  // 7) Get the values of the trained binary vector
+  7) Get the values of the trained binary vector
   for (int i = 0; i < 32; i++) {
-    int x = 460;
-    int y = 146;
-    int z = 241;
-    int w = 124;
+    int x = cpu_precomputed_BRIEF_binvec[i*4 + 0];
+    int y = cpu_precomputed_BRIEF_binvec[i*4 + 1];
+    int z = cpu_precomputed_BRIEF_binvec[i*4 + 2];
+    int w = cpu_precomputed_BRIEF_binvec[i*4 + 3];
     train_bin_vec[i] = make_int4(x, y, z, w);
   }
 
   // 8) Run gpu
-  for (int run = 0; run < 1; run++) {
-    gpu_rBRIEF(gpu_patches, gpu_pattern, train_bin_vec, K, P, I, WPB);
-    cudaDeviceSynchronize();
+  gpu_rBRIEF(gpu_patches, gpu_pattern, train_bin_vec, K, P, I, WPB);
+  cudaDeviceSynchronize();
+
+  for (int i = 0; i < P; i ++) {
+    printf("%d\n", i);
+    printf("%d\n", result[i]);
   }
 }
-
