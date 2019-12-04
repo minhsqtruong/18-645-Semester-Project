@@ -40,7 +40,7 @@ int main(int argc, char const *argv[]) {
   // //GPU=========================================================================
   //
   // 3) Check GPU stats
-  #ifdef PRINTSTATS
+  #ifdef rBRIEFDEBUG 
   struct cudaDeviceProp prop;
   cudaGetDeviceProperties(&prop, 0);
   std::cout << std::endl;
