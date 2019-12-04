@@ -1,5 +1,5 @@
 import os
-RUN = 1000
+RUN = 20
 sum = 0.0
 WPB = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1000]
 for wpb in WPB:
