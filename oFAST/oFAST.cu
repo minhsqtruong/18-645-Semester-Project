@@ -149,8 +149,9 @@ __device__ __forceinline__ bool isKeyPoint(int mask1, int mask2, uint8_t *shared
 
 
 // This is my kernel
-__global__ void calcKeyPoints(uint8_t* image, int rows, int cols, int threshold, float *data, int arr_size, int k, uint8_t *x_data, uint8_t *y_data, uint8_t *ctable_gpu)
+__global__ void calcKeyPoints(uint8_t* image, int rows, int cols, int threshold, float *data, int arr_size, int k, int *x_data, int *y_data, uint8_t *ctable_gpu)
 {
+    
     extern __shared__ uint8_t shared_table[];
     for (int ind = threadIdx.x; ind < 8129; ind+=blockDim.x)
     {
@@ -158,7 +159,7 @@ __global__ void calcKeyPoints(uint8_t* image, int rows, int cols, int threshold,
     }
     const int j = threadIdx.x + blockIdx.x * blockDim.x + 10;
     const int i = threadIdx.y + blockIdx.y * blockDim.y + 10;
-
+    //printf("%d %d\n", i, j);
     for (int a = 0; a < k; a++)
     {
         int next = a * rows * cols;
@@ -215,25 +216,45 @@ __global__ void calcKeyPoints(uint8_t* image, int rows, int cols, int threshold,
 
             if (isKeyPoint(mask1, mask2, shared_table))
             {
-                const unsigned int ind = atomicInc(&g_counter, (unsigned int)(-1));
-
-                if (ind < arr_size)
+                unsigned int ind = atomicInc(&g_counter, (unsigned int)(-1));
+                //printf("%d\n", ind);
+                //printf("%d %d\n", i, j);
+                if (ind < k * arr_size)
                 {
+
                     x_data[ind] = i;
                     y_data[ind] = j;
                     #pragma unroll
+                    
                     for (int b = 0; b < 100; b++)
                     {
                         // Getting the patch
                         data[(ind*100)+b] = static_cast<float>(img[cols*(i+4-(b/10))+(j+(-4+(b%10)))]);
 
                     }
+                    
                 }
             }
 
         }
     }
+}
 
+void gpu_oFAST(uint8_t* image, int rows, int cols, int threshold, float *data, int arr_size, int k, int *x_data, int *y_data)
+{
+    dim3 block(32, 8);
+    dim3 grid;
+    grid.x = divUp(rows - 6, block.x);
+    grid.y = divUp(cols - 6, block.y);
+    // Memory allocation for c_table
+    uint8_t *ctable_gpu;
+    cudaMallocManaged(&ctable_gpu, 8129);
+    for (int i = 0; i < 8129; i++)
+    {
+        ctable_gpu[i] = c_table[i];
+    }
+
+    calcKeyPoints<<<grid, block, 8129>>>(image, rows, cols, threshold, data, arr_size, k, x_data, y_data, ctable_gpu);
 }
 
 
