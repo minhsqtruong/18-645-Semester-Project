@@ -1,5 +1,5 @@
 import os
-RUN = 10
+RUN = 50
 sum = 0.0
 for run in range(1,RUN):
     os.system("/usr/local/cuda/bin/nvprof --log-file tmp.txt --unified-memory-profiling off ./a.out ")

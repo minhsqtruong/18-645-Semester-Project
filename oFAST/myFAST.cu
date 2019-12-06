@@ -252,10 +252,11 @@ int main(int argc, char *argv[])
 {
     cudaProfilerStart();
 
-    int k = 1000;
+    int k = 1;
     int arr_size = 300;      // 300 is good for threshold 50
-    int threshold = atoi(argv[1]);  // 35 is default
-
+    //int threshold = atoi(argv[1]);  // 35 is default
+    int threshold = 50;  // 35 is default
+    
     dim3 block(32, 8);
 
     int height = 878;
@@ -347,7 +348,7 @@ int main(int argc, char *argv[])
     // Printing coordinates
     for (i = 0; i < arr_size; i++)
     {
-        //printf("%d %d\n", x_data[i], y_data[i]);
+        printf("%d %d\n", x_data[i], y_data[i]);
     }
 
     // Free device memory
