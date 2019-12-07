@@ -2,8 +2,7 @@
 #include <fstream>
 #include "orb.cuh"
 #include <stdlib.h>
-#include "image.h"
-
+#include "./oFAST/image.h"
 int main(int argc, char const *argv[]) {
 
     // Begin oFAST
@@ -125,9 +124,6 @@ int main(int argc, char const *argv[]) {
     gpu_rBRIEF(gpu_patches, gpu_output, gpu_pattern, train_bin_vec, K, P, I, WPB);
     cudaDeviceSynchronize(); 
     
-    for (int i = 0; i < 128; i++)
-        printf("%d \n", gpu_output[i]);
-
     // test pipeline integration
     // pipeline_print_oFAST();
     // pipeline_print_rBRIEF();
