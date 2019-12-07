@@ -9,7 +9,8 @@ for wpb in WPB:
         with open('./tmp.txt') as log:
             for line in log:
                 if ("gpu_rBRIEF_naive" in line):
-                    val = float(line.split()[1].split("m")[0])
+                    print(line.split()[1])
+                    val = float(line.split()[1][:-2])
                     sum += val
     print("Average for " + str(wpb) + " is " + str(sum / RUN))
 
