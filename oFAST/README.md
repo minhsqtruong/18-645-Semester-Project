@@ -5,3 +5,6 @@ This is the oFAST keypoint detector part of the ORB pipeline. `tb_oFAST.cu` read
 * In `tb_oFAST.cu`, go to line 44 and comment out the `printf` statement to print all the patches and/or go to line 50 and comment out `printf` statement to print all the coordinates
 * In this folder, run `make test`
 * run `./tb_oFAST`
+
+
+`image.h` is a 1D row-major ordered array that contains brightness of each pixel. It was generated via MATLAB.
