@@ -7,7 +7,7 @@
 int main(int argc, char const *argv[]) {
 
     // Begin oFAST
-    int k = 1;
+    int k = 1;      // Number of images
     int arr_size = 300;      // 300 is good for threshold 50
     int threshold = 35;  // 35 is default
     int row = 750;
@@ -86,34 +86,38 @@ int main(int argc, char const *argv[]) {
     cudaMallocManaged(&train_bin_vec, sizeof(int4) * (P/4));
     cudaMallocManaged(&gpu_output, sizeof(int) * P * I);
 
-/*  // Obsolete code
-    std::fstream myfile("./rBRIEF/141patches.txt", std::ios_base::in);
-    float a;
+  // Obsolete code
+    // std::fstream myfile("./rBRIEF/141patches.txt", std::ios_base::in);
+    // float a;
 
-    // 5) Get the values of the patches
-    for (int pixel = 0; pixel < K * P; pixel++) {
-        myfile >> a;
-        raw_patches[pixel] = a;
-    }
+    // // 5) Get the values of the patches
+    // for (int pixel = 0; pixel < K * P; pixel++) {
+        // myfile >> a;
+        // raw_patches[pixel] = a;
+    // }
 
 
-    for (int img = 0; img < I; img++) {
-        for (int pixel= 0; pixel< (K * P) / 4; pixel++) {
-          float x = raw_patches[pixel * 4 + 0];
-          float y = raw_patches[pixel * 4 + 1];
-          float z = raw_patches[pixel * 4 + 2];
-          float w = raw_patches[pixel * 4 + 3];
-          gpu_patches[img * (K * P) / 4 + pixel] = make_float4(x,y,z,w);
-        }
-    }
+    // for (int img = 0; img < I; img++) {
+        // for (int pixel= 0; pixel< (K * P) / 4; pixel++) {
+          // float x = raw_patches[pixel * 4 + 0];
+          // float y = raw_patches[pixel * 4 + 1];
+          // float z = raw_patches[pixel * 4 + 2];
+          // float w = raw_patches[pixel * 4 + 3];
+          // gpu_patches[img * (K * P) / 4 + pixel] = make_float4(x,y,z,w);
+        // }
+    // }
     
-*/
+
     // Getting only the first 128 keypoints' patches from data_out (there are 300 originally)
     for (int i = 0; i < P*I*K/4; i++)
     {
         gpu_patches[i] = data_out[i];
     }
     
+    for (int i = 0; i < P*I*K/4; i++)
+    {
+        //printf("%f %f %f %f\n", gpu_patches[i].x, gpu_patches[i].y, gpu_patches[i].z, gpu_patches[i].w);
+    }
     // TODO: Segmentation error
 
     // 6) Get the values of the pattern
