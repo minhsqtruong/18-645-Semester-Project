@@ -250,27 +250,27 @@ void gpu_oFAST(uint8_t* image, int rows, int cols, int threshold, float4 *data_o
     // Memory allocation for c_table
     uint8_t *ctable_gpu;
     cudaMallocManaged(&ctable_gpu, 8129);
+    for (int i = 0; i < 8129; i++)
+    {
+        ctable_gpu[i] = c_table[i];
+    }
+    
     
     // Memory allocation for output brightness data
     float *gpu_data;
     cudaMallocManaged(&gpu_data, k * 100 * arr_size * sizeof(float));
     
-    for (int i = 0; i < 8129; i++)
-    {
-        ctable_gpu[i] = c_table[i];
-    }
+    
 
     calcKeyPoints<<<grid, block, 8129>>>(image, rows, cols, threshold, gpu_data, arr_size, k, x_data, y_data, ctable_gpu);
     
     cudaDeviceSynchronize();
     
-    // Putting in float4
-    
-
+    int c = 0;
     int i = 0;
     int j = 0;
-    int c = 0;
-
+    
+    // Putting in float4
     while (c < arr_size * k)
     {
         while (j < 24)
