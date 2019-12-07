@@ -4,7 +4,7 @@
 int main(int argc, char const *argv[]) {
     cudaProfilerStart();
 
-    int k = 1;
+    int k = 1000;
     int arr_size = 300;      // 300 is good for threshold 50
     int threshold = 35;  // 35 is default
     int row = 750;
@@ -66,7 +66,7 @@ int main(int argc, char const *argv[]) {
     // Printing coordinates
     for (i = 0; i < arr_size; i++)
     {
-        printf("%d %d\n", x_data[i], y_data[i]);
+        //printf("%d %d\n", x_data[i], y_data[i]);
     }
 
     // Free device memory

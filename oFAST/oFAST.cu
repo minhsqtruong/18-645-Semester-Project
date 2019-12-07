@@ -17,7 +17,7 @@ __device__ __forceinline__ int diffType(const int v, const int x, const int th)
 
 
 // mask1/2 light/dark
-__device__ void calcMask(const int C[4], const int v, const int th, int& mask1, int& mask2)
+__device__ void calcMask(const int C[4], const int v, const int th, uint16_t& mask1, uint16_t& mask2)
 {
     mask1 = 0;  // only cares about bright one
     mask2 = 0;  // only cares about dark
@@ -141,7 +141,7 @@ __device__ void calcMask(const int C[4], const int v, const int th, int& mask1, 
 // 0 -> not a keypoint
 
 // popc counts the number of 1's
-__device__ __forceinline__ bool isKeyPoint(int mask1, int mask2, uint8_t *shared_table)
+__device__ __forceinline__ bool isKeyPoint(uint16_t mask1, uint16_t mask2, uint8_t *shared_table)
 {
     return (__popc(mask1) > 8 && (shared_table[(mask1 >> 3) - 63] & (1 << (mask1 & 7)))) ||
            (__popc(mask2) > 8 && (shared_table[(mask2 >> 3) - 63] & (1 << (mask2 & 7))));
@@ -207,8 +207,8 @@ __global__ void calcKeyPoints(uint8_t* image, int rows, int cols, int threshold,
             C[0] |= static_cast<uint8_t>(img[i_plus_three + (j)]);
             C[0] |= static_cast<uint8_t>(img[i_plus_three + (j + 1)]) << 8;
 
-            int mask1 = 0;
-            int mask2 = 0;
+            uint16_t mask1 = 0;
+            uint16_t mask2 = 0;
 
             calcMask(C, v, threshold, mask1, mask2);
 
@@ -240,21 +240,49 @@ __global__ void calcKeyPoints(uint8_t* image, int rows, int cols, int threshold,
     }
 }
 
-void gpu_oFAST(uint8_t* image, int rows, int cols, int threshold, float *data, int arr_size, int k, int *x_data, int *y_data)
+void gpu_oFAST(uint8_t* image, int rows, int cols, int threshold, float4 *data_out, int arr_size, int k, int *x_data, int *y_data)
 {
     dim3 block(32, 8);
     dim3 grid;
     grid.x = divUp(rows - 6, block.x);
     grid.y = divUp(cols - 6, block.y);
+    
     // Memory allocation for c_table
     uint8_t *ctable_gpu;
     cudaMallocManaged(&ctable_gpu, 8129);
+    
+    // Memory allocation for output brightness data
+    float *gpu_data;
+    cudaMallocManaged(&gpu_data, k * 100 * arr_size * sizeof(float));
+    
     for (int i = 0; i < 8129; i++)
     {
         ctable_gpu[i] = c_table[i];
     }
 
-    calcKeyPoints<<<grid, block, 8129>>>(image, rows, cols, threshold, data, arr_size, k, x_data, y_data, ctable_gpu);
+    calcKeyPoints<<<grid, block, 8129>>>(image, rows, cols, threshold, gpu_data, arr_size, k, x_data, y_data, ctable_gpu);
+    
+    cudaDeviceSynchronize();
+    
+    // Putting in float4
+    
+
+    int i = 0;
+    int j = 0;
+    int c = 0;
+
+    while (c < arr_size * k)
+    {
+        while (j < 24)
+        {
+            data_out[24*c+j] = make_float4(gpu_data[100*c+i], gpu_data[100*c+i+1], gpu_data[100*c+i+2], gpu_data[100*c+i+3]);
+            i = i + 4;
+            j++;
+        }
+        i = 0;
+        j = 0;
+        c++;
+    }
 }
 
 
