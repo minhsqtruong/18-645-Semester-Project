@@ -52,10 +52,12 @@ to construct the pipeline. The root `Makefile` has 3 important recipe:
 make all
 ```
 ```
-# this creates shared object that can be used for demonstration.
-make lib
-```
-```
 # this call on all sub-Makefile cleaning routine.
 make clean
+```
+
+### Executable
+This executable is just to demonstrate that the pipeline works, for actual performance benchmark, go to oFAST/rBRIEF kernel folder
+```
+./tb_orb <image per block (1 - 1000)>
 ```
